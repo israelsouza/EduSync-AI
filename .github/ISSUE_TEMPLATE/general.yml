@@ -1,6 +1,6 @@
 name: General Issue
 description: Feature, enhancement or general suggestion for the project
-title: "[SYNCAI-<<ISSUE_NUMBER_HERE>>] Title resuming the issue"
+title: "[SYNCAI-XXX] Title resuming the issue"
 labels: [enhancement, feature, backend, devops, documentation]
 
 body:

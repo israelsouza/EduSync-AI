@@ -1,6 +1,6 @@
 name: Task
 description: Todo list with tasks to be done
-title: "[TASK][SYNCAI-<<PUT_ISSUE_NUMBER_HERE>>] Task title"
+title: "[TASK][SYNCAI-XXX] Task title"
 labels: [task]
 
 body:

@@ -1,6 +1,6 @@
 name: Bug Report
 description: Report a problem or unexpected behavior
-title: "[BUG][SYNCAI-<<ISSUE_NUMBER_HERE>>] Bug Report title"
+title: "[BUG][SYNCAI-XXX] Bug Report title"
 labels: [bug]
 
 body:
