@@ -6,15 +6,6 @@ labels: [task]
 body:
   - type: textarea
     attributes:
-      label: 🐛 Describe the task
-      description: A clear and concise description the task to be done.
+      label: 🐛 Create the tasks to be done
     validations:
       required: true
-
-  - type: textarea
-    attributes:
-      label: 📷 Evidences
-      description: If applicable, add screenshots to help explain the context of the task.
-      placeholder: Paste images or links here.
-    validations:
-      required: false
