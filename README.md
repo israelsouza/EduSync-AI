@@ -41,7 +41,7 @@ A solution for the challenge of `Innovation for Education Equity Hackathon 2026`
 
 The mobile frontend (React Native) is maintained in a separate repository:
 
-- **Repository:** [EduSync-AI-Frontend](https://github.com/Sofia-gith/)
+- **Repository:** [EduSync-AI-Frontend](https://github.com/Sofia-gith/Edusync-AI)
 
 ### Backend & Cloud
 
