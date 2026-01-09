@@ -1,0 +1,28 @@
+name: General Issue
+description: Feature, enhancement or general suggestion for the project
+title: "[SYNCAI-<<ISSUE_NUMBER_HERE>>] Title resuming the issue"
+labels: [enhancement, feature, backend, devops, documentation]
+
+body:
+  - type: textarea
+    attributes:
+      label: 🚀 Description
+      placeholder: |
+        You can describe with a clear and concise description of:
+        * what the problem is
+        * what you want to happen
+        * any alternative solutions or features you've considered
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: 🥸 References
+      placeholder: |
+        You can attach some screenshots or links here.
+        * Desktop
+        * Mobile
+        * Links
+        * [some link]()
+    validations:
+      required: false
