@@ -1,9 +1,12 @@
 import express from "express";
+import cors from "cors";
 import { errorMiddleware } from "./shared/error.middleware";
 
 const app = express();
+app.use(cors());
+app.use(express.json());
 
-app.get("/", (req, res) => {
+app.get("/", (_, res) => {
   res.send("Hello, World!");
 });
 
