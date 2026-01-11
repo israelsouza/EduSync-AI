@@ -14,7 +14,7 @@ export class LocalVectorService implements IVectorService {
     this.vectorStore = new SupabaseVectorStore(embeddings, {
       client: supabase,
       tableName: "pedagogical_knowledge_v384",
-      queryName: "match_documents",
+      queryName: "match_documents_v384",
     });
   }
 
