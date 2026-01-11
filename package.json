@@ -4,6 +4,7 @@
   "description": "A solution for the challenge of 'Innovation for Education Equity Hackathon 2026' ",
   "main": "src/server.ts",
   "scripts": {
+    "ingest": "tsx --env-file=.env src/scripts/ingest.ts",
     "dev": "tsx --env-file=.env src/server.ts",
     "dev:watch": "tsx --env-file=.env watch src/server.ts",
     "build": "tsc",
