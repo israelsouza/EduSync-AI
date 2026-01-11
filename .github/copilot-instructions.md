@@ -89,15 +89,46 @@
 
 ---
 
-## 🗂️ Repository Structure
+## 🗂️ Source Code Structure (src/)
 
 ```
-EduSync-AI/
-├── Backend code (Node.js/TypeScript)
-├── API endpoints for RAG & teacher data
-├── Integration with Supabase
-└── Documentation & issue templates
+src/
+├── app.ts # Express app setup, middleware registration, route mounting
+├── server.ts # HTTP server entry point
+├── config/
+│ └── env.ts # Environment variables with type-safe access
+├── interface/
+│ └── IVectorService.ts # Contract for vector search (search method)
+├── lib/
+│ ├── embeddingProviderFactory.ts # Creates embedding providers (local/OpenAI/Google)
+│ ├── supabaseClient.ts # Supabase client singleton
+│ └── vectorFactory.ts # Creates IVectorService implementations
+├── modules/
+│ └── health/
+│ ├── health.controller.ts # Handler for /health endpoint
+│ └── health.route.ts # Route registration
+├── scripts/
+│ └── ingest.ts # CLI script for PDF ingestion to vector store
+├── services/
+│ └── LocalVectorService.ts # 384-dim vector search with HuggingFace embeddings
+└── shared/
+├── AppError.ts # Custom error class with HTTP status codes
+└── error.middleware.ts # Global error handling middleware
 ```
+
+### Layer Responsibilities
+
+| Layer | Folder | Responsibility |
+|-------|--------|----------------|
+| **Entry Points** | `app.ts`, `server.ts` | Server initialization and configuration |
+| **Configuration** | `config/` | Type-safe environment variable access |
+| **Contracts** | `interface/` | TypeScript interfaces for dependency inversion |
+| **Factories** | `lib/` | Instance creation based on configuration |
+| **HTTP Layer** | `modules/` | Controllers and routes organized by domain |
+| **Business Logic** | `services/` | Business contract implementations |
+| **Cross-cutting** | `shared/` | Errors, middlewares, and shared utilities |
+| **Tooling** | `scripts/` | CLI scripts for manual operations |
+
 
 ---
 
