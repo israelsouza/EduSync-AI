@@ -36,10 +36,9 @@ async function runIngestion() {
       model: "Xenova/all-MiniLM-L6-v2", // O nome do modelo pode variar conforme o modelo baixado
     });
 
-
     const ids = docs.map((doc, idx) => {
-      const source = (doc.metadata['source'] as string) || "unknown";
-      const page = (doc.metadata['loc']?.pageNumber as number) ?? 0;
+      const source = (doc.metadata["source"] as string) || "unknown";
+      const page = (doc.metadata["loc"]?.pageNumber as number) ?? 0;
       return generateDeterministicId(source, page, idx);
     });
     console.log(`Generated ${ids.length} deterministic IDs`);
