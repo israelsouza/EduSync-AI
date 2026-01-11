@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import { errorMiddleware } from "./shared/error.middleware";
 import healthRouter from "./modules/health/health.route";
+import queryRouter from "./modules/query/query.route";
 
 const app = express();
 app.use(cors());
@@ -12,6 +13,7 @@ app.get("/", (_, res) => {
 });
 
 app.use("/health", healthRouter);
+app.use("/query", queryRouter);
 
 app.use(errorMiddleware);
 
