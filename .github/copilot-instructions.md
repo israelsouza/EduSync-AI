@@ -27,9 +27,9 @@
 3. ✅ Create LLM Factory - `src/lib/llmFactory.ts`
 
 **Phase 2: LLM Services (depends on Phase 1)**
-4. [ ] Implement OpenAILLMService - `src/services/OpenAILLMService.ts` (no more because no free tier)
-5. [ ] Implement GoogleLLMService - `src/services/GoogleLLMService.ts`
-6. [ ] Add unit tests for prompt builder and LLM services
+4. ✅ Implement OpenAILLMService - `src/services/OpenAILLMService.ts` (no more because no free tier)
+5. ✅ Implement GoogleLLMService - `src/services/GoogleLLMService.ts`
+6. ✅ Add unit tests for prompt builder and LLM services
 
 **Phase 3: RAG Integration (depends on Phase 2)**
 7. [ ] Create RAG Service - `src/services/RAGService.ts`
