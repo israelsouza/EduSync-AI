@@ -1,3 +1,6 @@
+const CLOUD_PROVIDERS = ["openai", "google"] as const;
+type CloudProvider = (typeof CLOUD_PROVIDERS)[number];
+
 const getEnvVar = (key: string, required = true): string => {
   const value = process.env[key];
   if (required && !value) {
@@ -11,9 +14,24 @@ const getOptionalEnvVar = (key: string, defaultValue = ""): string => {
 };
 
 export const env = {
-  embeddingProvider: getOptionalEnvVar("EMBEDDING_PROVIDER", "local").toLowerCase(),
+  get embeddingProvider(): string {
+    return getOptionalEnvVar("EMBEDDING_PROVIDER", "local").toLowerCase();
+  },
 
-  // API Keys (loaded lazily to avoid errors if not using that provider)
+  get isLocalEmbedding(): boolean {
+    return this.embeddingProvider === "local";
+  },
+
+  get isCloudEmbedding(): boolean {
+    return CLOUD_PROVIDERS.includes(this.embeddingProvider as CloudProvider);
+  },
+
+  // openai | google
+  get llmProvider(): string {
+    return getEnvVar("LLM_PROVIDER");
+  },
+
+  // active dependent on provider
   get openaiApiKey(): string {
     return getEnvVar("OPENAI_API_KEY");
   },
@@ -21,7 +39,6 @@ export const env = {
     return getEnvVar("GOOGLE_API_KEY");
   },
 
-  // Supabase
   get supabaseUrl(): string {
     return getEnvVar("SUPABASE_URL");
   },
@@ -30,16 +47,24 @@ export const env = {
   },
 
   validate() {
-    console.log(`🔍 Validando configurações para o provedor: ${this.embeddingProvider}`);
+    console.log(`🔍 Checking configs...`);
 
-    // Sempre valida o Supabase
+    // check Supabase settings
     void this.supabaseUrl;
     void this.supabaseAnonKey;
 
-    // Valida apenas o que o provedor atual exige
-    if (this.embeddingProvider === "openai") void this.openaiApiKey;
-    if (this.embeddingProvider === "google") void this.googleApiKey;
+    // Validate Embedding Provider
+    console.log(`📦 Embedding Provider: ${this.embeddingProvider}`);
+    if (this.isCloudEmbedding) {
+      if (this.embeddingProvider === "openai") void this.openaiApiKey;
+      if (this.embeddingProvider === "google") void this.googleApiKey;
+    }
 
-    console.log("✅ Configurações validadas com sucesso.");
+    // Validate LLM Provider
+    console.log(`🤖 LLM Provider: ${this.llmProvider}`);
+    if (this.llmProvider === "openai") void this.openaiApiKey;
+    if (this.llmProvider === "google") void this.googleApiKey;
+
+    console.log("✅ Configurations validated successfully.");
   },
 } as const;
