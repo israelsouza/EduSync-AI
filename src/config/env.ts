@@ -14,6 +14,20 @@ const getOptionalEnvVar = (key: string, defaultValue = ""): string => {
 };
 
 export const env = {
+  /**
+   * Embedding Provider Configuration
+   *
+   * Determines how text embeddings are generated for vector search.
+   *
+   * Options:
+   * - "local": Uses HuggingFace model (384-dim) running locally. No API key required.
+   *   Ideal for offline-first scenarios and privacy. Default value.
+   * - "openai": Uses OpenAI's embedding API. Requires OPENAI_API_KEY.
+   * - "google": Uses Google's embedding API. Requires GOOGLE_API_KEY.
+   *
+   * Note: Local embeddings are generated on-device for privacy and offline capability.
+   * Cloud providers offer higher accuracy but require internet and API costs.
+   */
   get embeddingProvider(): string {
     return getOptionalEnvVar("EMBEDDING_PROVIDER", "local").toLowerCase();
   },
@@ -26,7 +40,20 @@ export const env = {
     return CLOUD_PROVIDERS.includes(this.embeddingProvider as CloudProvider);
   },
 
-  // openai | google
+  /**
+   * LLM Provider Configuration
+   *
+   * Determines which Large Language Model service to use for generating responses.
+   *
+   * Options:
+   * - "openai": Uses OpenAI's GPT models. Requires OPENAI_API_KEY.
+   * - "google": Uses Google's Gemini models. Requires GOOGLE_API_KEY.
+   *
+   * Note: Unlike embeddings, LLM services are always cloud-based and require API keys.
+   * No local LLM option is currently implemented (see Milestone 4 for future local TTS/STT).
+   *
+   * This provider powers the "Sunita" persona for pedagogical advice generation.
+   */
   get llmProvider(): string {
     return getEnvVar("LLM_PROVIDER");
   },
