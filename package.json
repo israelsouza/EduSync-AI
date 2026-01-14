@@ -7,6 +7,7 @@
     "ingest": "tsx --env-file=.env src/scripts/ingest.ts",
     "dev": "tsx --env-file=.env src/server.ts",
     "dev:watch": "tsx --env-file=.env --watch src/server.ts",
+    "test": "jest",
     "build": "tsc",
     "start": "node dist/server.js",
     "prettier:check": "prettier --check ./src/**/*",
