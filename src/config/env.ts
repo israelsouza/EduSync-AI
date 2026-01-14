@@ -1,4 +1,4 @@
-const CLOUD_PROVIDERS = ["openai", "google"] as const;
+const CLOUD_PROVIDERS = ["google"] as const;
 type CloudProvider = (typeof CLOUD_PROVIDERS)[number];
 
 const getEnvVar = (key: string, required = true): string => {
@@ -59,9 +59,6 @@ export const env = {
   },
 
   // active dependent on provider
-  get openaiApiKey(): string {
-    return getEnvVar("OPENAI_API_KEY");
-  },
   get googleApiKey(): string {
     return getEnvVar("GOOGLE_API_KEY");
   },
@@ -83,13 +80,11 @@ export const env = {
     // Validate Embedding Provider
     console.log(`📦 Embedding Provider: ${this.embeddingProvider}`);
     if (this.isCloudEmbedding) {
-      if (this.embeddingProvider === "openai") void this.openaiApiKey;
       if (this.embeddingProvider === "google") void this.googleApiKey;
     }
 
     // Validate LLM Provider
     console.log(`🤖 LLM Provider: ${this.llmProvider}`);
-    if (this.llmProvider === "openai") void this.openaiApiKey;
     if (this.llmProvider === "google") void this.googleApiKey;
 
     console.log("✅ Configurations validated successfully.");
