@@ -12,7 +12,7 @@
 
 ### 🎯 Milestone 2: Motor de Resposta (RAG Pipeline)
 
-**Current Status: ~25% Complete**
+**Current Status: ~90% Complete**
 
 **✅ Completed:**
 - Vector search endpoint (`POST /query`)
@@ -27,19 +27,19 @@
 3. ✅ Create LLM Factory - `src/lib/llmFactory.ts`
 
 **Phase 2: LLM Services (depends on Phase 1)**
-4. [ ] Implement OpenAILLMService - `src/services/OpenAILLMService.ts`
-5. [ ] Implement GoogleLLMService - `src/services/GoogleLLMService.ts`
-6. [ ] Add unit tests for prompt builder and LLM services
+4. ✅ Implement OpenAILLMService - `src/services/OpenAILLMService.ts` (no more because no free tier)
+5. ✅ Implement GoogleLLMService - `src/services/GoogleLLMService.ts`
+6. ✅ Add unit tests for prompt builder and LLM services
 
 **Phase 3: RAG Integration (depends on Phase 2)**
-7. [ ] Create RAG Service - `src/services/RAGService.ts`
-8. [ ] Implement context formatting for LLM input
-9. [ ] Add confidence threshold for "I don't know" responses
+7. ✅ Create RAG Service - `src/services/RAGService.ts`
+8. ✅ Implement context formatting for LLM input
+9. ✅ Add confidence threshold for "I don't know" responses
 
 **Phase 4: Chat Endpoint (depends on Phase 3)**
-10. [ ] Create Chat Module - `src/modules/chat/`
-11. [ ] Register route in `app.ts` - `POST /chat`
-12. [ ] Integration tests for full RAG pipeline
+10. ✅ Create Chat Module - `src/modules/chat/`
+11. ✅ Register route in `app.ts` - `POST /chat`
+12. ✅ Integration tests for full RAG pipeline
 
 **Phase 5: Context Management (optional)**
 13. [ ] Create Context Service for multi-turn dialogues
