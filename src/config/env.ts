@@ -1,3 +1,9 @@
+const CLOUD_PROVIDERS = ["google"] as const;
+type CloudProvider = (typeof CLOUD_PROVIDERS)[number];
+
+const SUPPORTED_LLM_PROVIDERS = ["google"] as const;
+type LLMProvider = (typeof SUPPORTED_LLM_PROVIDERS)[number];
+
 const getEnvVar = (key: string, required = true): string => {
   const value = process.env[key];
   if (required && !value) {
@@ -11,17 +17,58 @@ const getOptionalEnvVar = (key: string, defaultValue = ""): string => {
 };
 
 export const env = {
-  embeddingProvider: getOptionalEnvVar("EMBEDDING_PROVIDER", "local").toLowerCase(),
-
-  // API Keys (loaded lazily to avoid errors if not using that provider)
-  get openaiApiKey(): string {
-    return getEnvVar("OPENAI_API_KEY");
+  /**
+   * Embedding Provider Configuration
+   *
+   * Determines how text embeddings are generated for vector search.
+   *
+   * Options:
+   * - "local": Uses HuggingFace model (384-dim) running locally. No API key required.
+   *   Ideal for offline-first scenarios and privacy. Default value.
+   * - "openai": Uses OpenAI's embedding API. Requires OPENAI_API_KEY.
+   * - "google": Uses Google's embedding API. Requires GOOGLE_API_KEY.
+   *
+   * Note: Local embeddings are generated on-device for privacy and offline capability.
+   * Cloud providers offer higher accuracy but require internet and API costs.
+   */
+  get embeddingProvider(): string {
+    return getOptionalEnvVar("EMBEDDING_PROVIDER", "local").toLowerCase();
   },
+
+  get isLocalEmbedding(): boolean {
+    return this.embeddingProvider === "local";
+  },
+
+  get isCloudEmbedding(): boolean {
+    return CLOUD_PROVIDERS.includes(this.embeddingProvider as CloudProvider);
+  },
+
+  /**
+   * LLM Provider Configuration
+   *
+   * Determines which Large Language Model service to use for generating responses.
+   *
+   * Options:
+   * - "google": Uses Google's Gemini models. Requires GOOGLE_API_KEY.
+   *
+   * Note: Unlike embeddings, LLM services are always cloud-based and require API keys.
+   * No local LLM option is currently implemented (see Milestone 4 for future local TTS/STT).
+   *
+   * This provider powers the "Sunita" persona for pedagogical advice generation.
+   */
+  get llmProvider(): string {
+    return getEnvVar("LLM_PROVIDER");
+  },
+
+  get isSupportedLLMProvider(): boolean {
+    return SUPPORTED_LLM_PROVIDERS.includes(this.llmProvider as LLMProvider);
+  },
+
+  // active dependent on provider
   get googleApiKey(): string {
     return getEnvVar("GOOGLE_API_KEY");
   },
 
-  // Supabase
   get supabaseUrl(): string {
     return getEnvVar("SUPABASE_URL");
   },
@@ -30,16 +77,25 @@ export const env = {
   },
 
   validate() {
-    console.log(`🔍 Validando configurações para o provedor: ${this.embeddingProvider}`);
+    console.log(`🔍 Checking configs...`);
 
-    // Sempre valida o Supabase
+    // check Supabase settings
     void this.supabaseUrl;
     void this.supabaseAnonKey;
 
-    // Valida apenas o que o provedor atual exige
-    if (this.embeddingProvider === "openai") void this.openaiApiKey;
-    if (this.embeddingProvider === "google") void this.googleApiKey;
+    // Validate Embedding Provider
+    console.log(`📦 Embedding Provider: ${this.embeddingProvider}`);
+    if (this.isCloudEmbedding) {
+      if (this.embeddingProvider === "google") void this.googleApiKey;
+    }
 
-    console.log("✅ Configurações validadas com sucesso.");
+    // Validate LLM Provider
+    console.log(`🤖 LLM Provider: ${this.llmProvider}`);
+    if (!this.isSupportedLLMProvider) {
+      throw new Error(`Invalid LLM_PROVIDER "${this.llmProvider}". Supported providers: ${SUPPORTED_LLM_PROVIDERS.join(", ")}`);
+    }
+    if (this.llmProvider === "google") void this.googleApiKey;
+
+    console.log("✅ Configurations validated successfully.");
   },
 } as const;
