@@ -92,9 +92,7 @@ export const env = {
     // Validate LLM Provider
     console.log(`🤖 LLM Provider: ${this.llmProvider}`);
     if (!this.isSupportedLLMProvider) {
-      throw new Error(
-        `Invalid LLM_PROVIDER "${this.llmProvider}". Supported providers: ${SUPPORTED_LLM_PROVIDERS.join(", ")}`
-      );
+      throw new Error(`Invalid LLM_PROVIDER "${this.llmProvider}". Supported providers: ${SUPPORTED_LLM_PROVIDERS.join(", ")}`);
     }
     if (this.llmProvider === "google") void this.googleApiKey;
 

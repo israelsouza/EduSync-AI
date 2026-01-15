@@ -1,7 +1,6 @@
 import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
-import { HumanMessage, SystemMessage } from "@langchain/core/messages";
+import { HumanMessage } from "@langchain/core/messages";
 import { ILLMService } from "../interface/ILLMService.js";
-import { SUNITA_SYSTEM_PROMPT } from "../prompts/systemPrompt.js";
 
 /**
  * Google Gemini LLM Service Implementation
@@ -27,13 +26,13 @@ export class GoogleLLMService implements ILLMService {
   /**
    * Generate a response using Google's Gemini model
    *
-   * @param prompt - The formatted prompt with context and query
+   * @param prompt - The formatted prompt with system instructions, context, and query (pre-formatted by RAGService)
    * @returns Generated response text
    * @throws {TypeError} If LLM response content is not a string or cannot be converted
    * @throws {Error} If API call fails or response is invalid
    */
   async generateResponse(prompt: string): Promise<string> {
-    const messages = [new SystemMessage(SUNITA_SYSTEM_PROMPT), new HumanMessage(prompt)];
+    const messages = [new HumanMessage(prompt)];
 
     try {
       const response = await this.model.invoke(messages);

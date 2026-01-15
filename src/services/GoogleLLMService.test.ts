@@ -1,6 +1,5 @@
 import { GoogleLLMService } from "./GoogleLLMService";
 import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
-import { SUNITA_SYSTEM_PROMPT } from "../prompts/systemPrompt";
 
 jest.mock("@langchain/google-genai");
 
@@ -50,7 +49,7 @@ describe("GoogleLLMService", () => {
   });
 
   describe("generateResponse", () => {
-    test("should generate response with system and human messages", async () => {
+    test("should generate response with human message only", async () => {
       const mockResponse = {
         content: "Esta é uma estratégia pedagógica para sua sala de aula.",
       };
@@ -61,9 +60,6 @@ describe("GoogleLLMService", () => {
 
       expect(mockInvoke).toHaveBeenCalledTimes(1);
       expect(mockInvoke).toHaveBeenCalledWith([
-        expect.objectContaining({
-          content: SUNITA_SYSTEM_PROMPT,
-        }),
         expect.objectContaining({
           content: prompt,
         }),
@@ -77,10 +73,7 @@ describe("GoogleLLMService", () => {
 
       const response = await service.generateResponse("");
 
-      expect(mockInvoke).toHaveBeenCalledWith([
-        expect.objectContaining({ content: SUNITA_SYSTEM_PROMPT }),
-        expect.objectContaining({ content: "" }),
-      ]);
+      expect(mockInvoke).toHaveBeenCalledWith([expect.objectContaining({ content: "" })]);
       expect(response).toBe(mockResponse.content);
     });
 
@@ -91,7 +84,7 @@ describe("GoogleLLMService", () => {
 
       const response = await service.generateResponse(longPrompt);
 
-      expect(mockInvoke).toHaveBeenCalledWith([expect.anything(), expect.objectContaining({ content: longPrompt })]);
+      expect(mockInvoke).toHaveBeenCalledWith([expect.objectContaining({ content: longPrompt })]);
       expect(response).toBe(mockResponse.content);
     });
 

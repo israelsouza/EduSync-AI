@@ -97,9 +97,7 @@ export class RAGService {
         model: this.llmService.getModelInfo(),
       };
     } catch (error) {
-      
       throw new Error(`RAGService generateResponse error: ${(error as Error).message}`, { cause: error });
-
     }
   }
 
