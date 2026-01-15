@@ -112,8 +112,33 @@ describe("GoogleLLMService", () => {
       const mockResponse = { content: { text: "Invalid format" } };
       mockInvoke.mockResolvedValue(mockResponse);
 
+      const response = await service.generateResponse("test");
+
+      expect(response).toBe("Invalid format");
+    });
+
+    test("should handle array content responses", async () => {
+      const mockResponse = { content: ["Part 1", " Part 2"] };
+      mockInvoke.mockResolvedValue(mockResponse);
+
+      const response = await service.generateResponse("test");
+
+      expect(response).toBe("Part 1 Part 2");
+    });
+
+    test("should throw TypeError for unsupported content types", async () => {
+      const mockResponse = { content: { data: "no text field" } };
+      mockInvoke.mockResolvedValue(mockResponse);
+
       await expect(service.generateResponse("test")).rejects.toThrow(TypeError);
       await expect(service.generateResponse("test")).rejects.toThrow("LLM response content must be a string");
+    });
+
+    test("should throw error for null/undefined content", async () => {
+      const mockResponse = { content: null };
+      mockInvoke.mockResolvedValue(mockResponse);
+
+      await expect(service.generateResponse("test")).rejects.toThrow("LLM returned empty or invalid response");
     });
   });
 
