@@ -12,7 +12,7 @@
 
 ### 🎯 Milestone 2: Motor de Resposta (RAG Pipeline)
 
-**Current Status: ~25% Complete**
+**Current Status: ~90% Complete**
 
 **✅ Completed:**
 - Vector search endpoint (`POST /query`)
@@ -37,9 +37,9 @@
 9. ✅ Add confidence threshold for "I don't know" responses
 
 **Phase 4: Chat Endpoint (depends on Phase 3)**
-10. [ ] Create Chat Module - `src/modules/chat/`
-11. [ ] Register route in `app.ts` - `POST /chat`
-12. [ ] Integration tests for full RAG pipeline
+10. ✅ Create Chat Module - `src/modules/chat/`
+11. ✅ Register route in `app.ts` - `POST /chat`
+12. ✅ Integration tests for full RAG pipeline
 
 **Phase 5: Context Management (optional)**
 13. [ ] Create Context Service for multi-turn dialogues
