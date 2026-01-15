@@ -112,9 +112,8 @@ describe("GoogleLLMService", () => {
       const mockResponse = { content: { text: "Invalid format" } };
       mockInvoke.mockResolvedValue(mockResponse);
 
-      const response = await service.generateResponse("test");
-
-      expect(response).toEqual({ text: "Invalid format" });
+      await expect(service.generateResponse("test")).rejects.toThrow(TypeError);
+      await expect(service.generateResponse("test")).rejects.toThrow("LLM response content must be a string");
     });
   });
 

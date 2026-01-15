@@ -29,12 +29,18 @@ export class GoogleLLMService implements ILLMService {
    *
    * @param prompt - The formatted prompt with context and query
    * @returns Generated response text
+   * @throws {TypeError} If LLM response content is not a string
    */
   async generateResponse(prompt: string): Promise<string> {
     const messages = [new SystemMessage(SUNITA_SYSTEM_PROMPT), new HumanMessage(prompt)];
 
     const response = await this.model.invoke(messages);
-    return response.content as string;
+
+    if (typeof response.content !== "string") {
+      throw new TypeError("LLM response content must be a string");
+    }
+
+    return response.content;
   }
 
   /**
