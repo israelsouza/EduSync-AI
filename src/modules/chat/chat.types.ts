@@ -4,6 +4,8 @@
 export interface ChatRequest {
   /** The teacher's question or prompt */
   query: string;
+  /** Optional session ID for multi-turn conversations */
+  sessionId?: string;
 }
 
 /**
@@ -12,6 +14,8 @@ export interface ChatRequest {
 export interface ChatResponse {
   /** The generated answer from Sunita */
   answer: string;
+  /** Session ID for continuing the conversation */
+  sessionId: string;
   /** Source documents used for context */
   sources: {
     content: string;

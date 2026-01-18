@@ -12,7 +12,7 @@
 
 ### 🎯 Milestone 2: Motor de Resposta (RAG Pipeline)
 
-**Current Status: ~90% Complete**
+**Current Status: ✅ 100% Complete**
 
 **✅ Completed:**
 - Vector search endpoint (`POST /query`)
@@ -42,8 +42,8 @@
 12. ✅ Integration tests for full RAG pipeline
 
 **Phase 5: Context Management (optional)**
-13. [ ] Create Context Service for multi-turn dialogues
-14. [ ] Add session tracking to chat controller
+13. ✅ Create Context Service for multi-turn dialogues
+14. ✅ Add session tracking to chat controller
 
 ---
 
