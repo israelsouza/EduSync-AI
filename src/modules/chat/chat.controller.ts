@@ -50,8 +50,8 @@ export const chatController = async (req: Request, res: Response, next: NextFunc
     const llmService = createLLMService();
     const ragService = new RAGService(vectorService, llmService);
 
-    // Generate response with conversation context
-    const ragResponse = await ragService.generateResponse(query.trim() + conversationContext);
+    // Generate response (vector search uses only query, conversation context added to LLM prompt)
+    const ragResponse = await ragService.generateResponse(query.trim(), conversationContext);
 
     // Add assistant response to session
     contextService.addMessage(currentSessionId, "assistant", ragResponse.answer);
