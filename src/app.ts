@@ -6,6 +6,7 @@ import healthRouter from "./modules/health/health.route";
 import queryRouter from "./modules/query/query.route";
 import chatRouter from "./modules/chat/chat.route";
 import exportRouter from "./modules/export/export.route";
+import syncRouter from "./modules/sync/sync.route";
 import testRouter from "./modules/tmp/testProviders.route";
 
 const app = express();
@@ -22,6 +23,7 @@ app.use("/health", healthRouter);
 app.use("/query", queryRouter);
 app.use("/chat", chatRouter);
 app.use("/api/export", exportRouter);
+app.use("/api/sync", syncRouter);
 app.use("/tmp", testRouter);
 
 app.use(errorMiddleware);

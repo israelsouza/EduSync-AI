@@ -1,0 +1,175 @@
+### Sync API Tests
+### Use REST Client extension in VS Code to execute these requests
+
+@baseUrl = http://localhost:3000
+@syncPath = /api/sync
+
+###############################################
+# 1. Get Sync Rules
+###############################################
+
+GET {{baseUrl}}{{syncPath}}/rules
+Accept: application/json
+
+### Expected response:
+# {
+#   "success": true,
+#   "data": {
+#     "wifiOnly": true,
+#     "minBatteryLevel": 20,
+#     "requireCharging": false,
+#     "minConnectionQuality": "good",
+#     "maxCellularDataUsage": 0
+#   },
+#   "metadata": {
+#     "version": "1.0",
+#     "lastUpdated": "ISO timestamp"
+#   }
+# }
+
+###############################################
+# 2. Connection Quality Test (Ping)
+###############################################
+
+GET {{baseUrl}}{{syncPath}}/ping
+Accept: application/json
+
+### Expected response:
+# {
+#   "success": true,
+#   "timestamp": "ISO timestamp",
+#   "serverTime": 1234567890
+# }
+
+###############################################
+# 3. Compare Versions - Check if outdated
+###############################################
+
+GET {{baseUrl}}{{syncPath}}/compare?localVersion=2026.01.18.100000
+Accept: application/json
+
+### Expected response:
+# {
+#   "success": true,
+#   "localVersion": "2026.01.18.100000",
+#   "latestVersion": "2026.01.18.143025",
+#   "comparison": {
+#     "isOutdated": true,
+#     "versionDiff": 5,
+#     "shouldFullSync": false,
+#     "estimatedChanges": 0
+#   }
+# }
+
+###############################################
+# 4. Delta Sync - Get changes since version
+###############################################
+
+POST {{baseUrl}}{{syncPath}}/delta
+Content-Type: application/json
+Accept: application/json
+
+{
+  "localVersion": "2026.01.18.100000",
+  "deviceId": "test-device-123",
+  "limit": 500,
+  "offset": 0
+}
+
+### Expected response:
+# {
+#   "success": true,
+#   "latestVersion": "2026.01.18.143025",
+#   "localVersion": "2026.01.18.100000",
+#   "isOutdated": true,
+#   "requiresFullSync": false,
+#   "changes": [],
+#   "totalChanges": 0,
+#   "metadata": {
+#     "changesSince": "2026.01.18.100000",
+#     "generatedAt": "ISO timestamp"
+#   }
+# }
+
+###############################################
+# 5. Delta Sync - Old version (requires full sync)
+###############################################
+
+POST {{baseUrl}}{{syncPath}}/delta
+Content-Type: application/json
+Accept: application/json
+
+{
+  "localVersion": "2026.01.01.000000",
+  "deviceId": "test-device-456"
+}
+
+### Expected: requiresFullSync: true
+
+###############################################
+# 6. Delta Sync - Missing localVersion (error)
+###############################################
+
+POST {{baseUrl}}{{syncPath}}/delta
+Content-Type: application/json
+Accept: application/json
+
+{
+  "deviceId": "test-device-789"
+}
+
+### Expected: 400 Bad Request
+
+###############################################
+# 7. Compare Versions - Missing parameter (error)
+###############################################
+
+GET {{baseUrl}}{{syncPath}}/compare
+Accept: application/json
+
+### Expected: 400 Bad Request
+
+###############################################
+# 8. Mobile Sync Flow Simulation
+###############################################
+
+### Step 1: Check sync rules
+GET {{baseUrl}}{{syncPath}}/rules
+Accept: application/json
+
+###
+
+### Step 2: Test connection quality
+GET {{baseUrl}}{{syncPath}}/ping
+Accept: application/json
+
+###
+
+### Step 3: Compare local version with remote
+GET {{baseUrl}}{{syncPath}}/compare?localVersion=2026.01.18.120000
+Accept: application/json
+
+###
+
+### Step 4: Request delta sync if outdated
+POST {{baseUrl}}{{syncPath}}/delta
+Content-Type: application/json
+Accept: application/json
+
+{
+  "localVersion": "2026.01.18.120000",
+  "deviceId": "mobile-app-001"
+}
+
+###
+
+### Step 5: If requiresFullSync is false, continue with delta
+### If requiresFullSync is true, call /api/export/embeddings instead
+
+###############################################
+# 9. Latency Test - Measure response time
+###############################################
+
+### Repeat this request multiple times to test latency
+GET {{baseUrl}}{{syncPath}}/ping
+Accept: application/json
