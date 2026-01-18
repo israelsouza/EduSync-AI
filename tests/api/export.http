@@ -1,0 +1,161 @@
+### Export API Tests
+### Use REST Client extension in VS Code to execute these requests
+
+@baseUrl = http://localhost:3000
+@apiPath = /api/export
+
+###############################################
+# 1. Basic Export - Get first 1000 embeddings
+###############################################
+
+GET {{baseUrl}}{{apiPath}}/embeddings
+Accept: application/json
+
+###############################################
+# 2. Paginated Export - First 50 embeddings
+###############################################
+
+GET {{baseUrl}}{{apiPath}}/embeddings?limit=50&offset=0
+Accept: application/json
+
+###############################################
+# 3. Paginated Export - Next 50 embeddings
+###############################################
+
+GET {{baseUrl}}{{apiPath}}/embeddings?limit=50&offset=50
+Accept: application/json
+
+###############################################
+# 4. Small Batch - Test download manager simulation
+###############################################
+
+GET {{baseUrl}}{{apiPath}}/embeddings?limit=10&offset=0
+Accept: application/json
+
+###############################################
+# 5. With Compression - Check gzip working
+###############################################
+
+GET {{baseUrl}}{{apiPath}}/embeddings?limit=100&offset=0
+Accept: application/json
+Accept-Encoding: gzip, deflate, br
+
+###############################################
+# 6. With Version Parameter
+###############################################
+
+GET {{baseUrl}}{{apiPath}}/embeddings?version=2026.01.18.000000&limit=50
+Accept: application/json
+
+###############################################
+# 7. Maximum Limit - Edge case (5000)
+###############################################
+
+GET {{baseUrl}}{{apiPath}}/embeddings?limit=5000&offset=0
+Accept: application/json
+
+###############################################
+# 8. Invalid Limit - Should return 400 error
+###############################################
+
+GET {{baseUrl}}{{apiPath}}/embeddings?limit=10000&offset=0
+Accept: application/json
+
+###############################################
+# 9. Negative Offset - Should return 400 error
+###############################################
+
+GET {{baseUrl}}{{apiPath}}/embeddings?limit=50&offset=-1
+Accept: application/json
+
+###############################################
+# 10. Invalid Limit Type - Should return 400
+###############################################
+
+GET {{baseUrl}}{{apiPath}}/embeddings?limit=abc&offset=0
+Accept: application/json
+
+###############################################
+# 11. Check Response Headers - Pagination metadata
+###############################################
+
+GET {{baseUrl}}{{apiPath}}/embeddings?limit=100&offset=200
+Accept: application/json
+
+### Expected headers:
+### X-Total-Count: (total embeddings in database)
+### X-Offset: 200
+### X-Limit: 100
+
+###############################################
+# 12. Large Offset - Test end of dataset
+###############################################
+
+GET {{baseUrl}}{{apiPath}}/embeddings?limit=50&offset=9000
+Accept: application/json
+
+### If total embeddings < 9000, should return fewer results or 404
+
+###############################################
+# 13. Verify Response Structure
+###############################################
+
+GET {{baseUrl}}{{apiPath}}/embeddings?limit=2&offset=0
+Accept: application/json
+
+### Expected response format:
+# {
+#   "success": true,
+#   "data": {
+#     "version": "2026.01.18.143025",
+#     "count": 2,
+#     "model": {
+#       "name": "Xenova/all-MiniLM-L6-v2",
+#       "dimensions": 384
+#     },
+#     "embeddings": [
+#       {
+#         "id": "uuid",
+#         "content": "text content",
+#         "embedding": [0.1, 0.2, ...],
+#         "metadata": { "source": "...", "page": 1, "chapter": "..." }
+#       }
+#     ],
+#     "metadata": {
+#       "createdAt": "ISO timestamp",
+#       "tableName": "pedagogical_knowledge_v384",
+#       "compressionEnabled": true
+#     }
+#   }
+# }
+
+###############################################
+# 14. Simulate Mobile App Download Flow
+# (Download in batches of 500)
+###############################################
+
+### Batch 1
+GET {{baseUrl}}{{apiPath}}/embeddings?limit=500&offset=0
+Accept: application/json
+Accept-Encoding: gzip
+
+###
+
+### Batch 2
+GET {{baseUrl}}{{apiPath}}/embeddings?limit=500&offset=500
+Accept: application/json
+Accept-Encoding: gzip
+
+###
+
+### Batch 3
+GET {{baseUrl}}{{apiPath}}/embeddings?limit=500&offset=1000
+Accept: application/json
+Accept-Encoding: gzip
+
+###############################################
+# 15. Health Check (bonus)
+###############################################
+
+GET {{baseUrl}}/health
+Accept: application/json
