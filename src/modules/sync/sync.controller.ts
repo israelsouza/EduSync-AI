@@ -6,34 +6,31 @@ import { AppError } from "../../shared/AppError.js";
 
 /**
  * Get Sync Rules Controller
- * 
+ *
  * Returns the current synchronization rules that mobile clients should follow.
  * These rules determine when the device is eligible to sync (WiFi-only, battery, etc.)
  */
-export const getSyncRulesController = async (
-  _: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> => {
+export const getSyncRulesController = async (_: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     // In a production system, these rules could be:
     // - Stored in database
     // - Configurable per region/user group
     // - Adjusted based on network conditions
     // - Retrieved from environment variables
-    
+
     const syncRules: SyncRules = {
       ...DEFAULT_SYNC_RULES,
       // Override defaults with environment-specific rules if needed
-      wifiOnly: process.env['SYNC_WIFI_ONLY'] === 'true' ? true : process.env['SYNC_WIFI_ONLY'] === 'false' ? false : DEFAULT_SYNC_RULES.wifiOnly,
-      minBatteryLevel: Number(process.env['SYNC_MIN_BATTERY']) || DEFAULT_SYNC_RULES.minBatteryLevel,
+      wifiOnly:
+        process.env["SYNC_WIFI_ONLY"] === "true" ? true : process.env["SYNC_WIFI_ONLY"] === "false" ? false : DEFAULT_SYNC_RULES.wifiOnly,
+      minBatteryLevel: Number(process.env["SYNC_MIN_BATTERY"]) || DEFAULT_SYNC_RULES.minBatteryLevel,
     };
 
     res.status(200).json({
       success: true,
       data: syncRules,
       metadata: {
-        version: '1.0',
+        version: "1.0",
         lastUpdated: new Date().toISOString(),
       },
     });
@@ -44,18 +41,14 @@ export const getSyncRulesController = async (
 
 /**
  * Connection Test Controller
- * 
+ *
  * Simple ping endpoint to test connection quality.
  * Frontend measures latency to determine connection quality.
  */
-export const connectionTestController = async (
-  _: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> => {
+export const connectionTestController = async (_: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const startTime = Date.now();
-    
+
     // Return minimal response for speed test
     res.status(200).json({
       success: true,
@@ -69,15 +62,11 @@ export const connectionTestController = async (
 
 /**
  * Delta Sync Controller
- * 
+ *
  * Compares client's local version with backend and returns only changed embeddings.
  * This reduces bandwidth usage by avoiding full re-downloads.
  */
-export const deltaSyncController = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> => {
+export const deltaSyncController = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { localVersion } = req.body as DeltaSyncRequest;
 
@@ -142,18 +131,14 @@ export const deltaSyncController = async (
 
 /**
  * Version Comparison Controller
- * 
+ *
  * Helper endpoint to check if local version is outdated without downloading changes.
  */
-export const compareVersionsController = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> => {
+export const compareVersionsController = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { localVersion } = req.query;
 
-    if (!localVersion || typeof localVersion !== 'string') {
+    if (!localVersion || typeof localVersion !== "string") {
       throw new AppError("localVersion query parameter is required", 400);
     }
 

@@ -1,6 +1,6 @@
 /**
  * Storage Quota Manager Interface
- * 
+ *
  * Manages local storage quotas, monitors usage, and implements cleanup strategies
  * to prevent the app from consuming excessive device storage.
  */
@@ -39,7 +39,7 @@ export interface StorageUsage {
  */
 export interface CleanupStrategy {
   /** Strategy name */
-  name: 'lru' | 'oldest_first' | 'low_usage' | 'partial';
+  name: "lru" | "oldest_first" | "low_usage" | "partial";
 
   /** Description */
   description: string;
@@ -105,7 +105,7 @@ export interface IStorageQuotaManager {
    * @param strategy - Cleanup strategy to use
    * @param targetPercentage - Percentage to clean (0-1)
    */
-  executeCleanup(strategy: CleanupStrategy['name'], targetPercentage?: number): Promise<CleanupResult>;
+  executeCleanup(strategy: CleanupStrategy["name"], targetPercentage?: number): Promise<CleanupResult>;
 
   /**
    * Get recommended cleanup strategy based on current usage
@@ -161,7 +161,7 @@ export interface StorageQuotaConfig {
   enableAutoCleanup: boolean;
 
   /** Default cleanup strategy */
-  defaultCleanupStrategy: CleanupStrategy['name'];
+  defaultCleanupStrategy: CleanupStrategy["name"];
 }
 
 /**
@@ -174,7 +174,7 @@ export const DEFAULT_QUOTA_CONFIG: StorageQuotaConfig = {
   cleanupThreshold: 0.9, // 90%
   minFreeStorageBytes: 50 * 1024 * 1024, // 50MB
   enableAutoCleanup: true,
-  defaultCleanupStrategy: 'lru',
+  defaultCleanupStrategy: "lru",
 };
 
 /**
@@ -182,26 +182,26 @@ export const DEFAULT_QUOTA_CONFIG: StorageQuotaConfig = {
  */
 export const CLEANUP_STRATEGIES: CleanupStrategy[] = [
   {
-    name: 'lru',
-    description: 'Least Recently Used - Remove embeddings not accessed recently',
+    name: "lru",
+    description: "Least Recently Used - Remove embeddings not accessed recently",
     priority: 1,
     targetPercentage: 0.2, // Remove 20%
   },
   {
-    name: 'oldest_first',
-    description: 'Remove oldest embeddings by sync date',
+    name: "oldest_first",
+    description: "Remove oldest embeddings by sync date",
     priority: 2,
     targetPercentage: 0.2,
   },
   {
-    name: 'low_usage',
-    description: 'Remove embeddings with lowest usage frequency',
+    name: "low_usage",
+    description: "Remove embeddings with lowest usage frequency",
     priority: 3,
     targetPercentage: 0.15, // Remove 15%
   },
   {
-    name: 'partial',
-    description: 'Keep only most relevant embeddings based on topic clustering',
+    name: "partial",
+    description: "Keep only most relevant embeddings based on topic clustering",
     priority: 4,
     targetPercentage: 0.3, // Remove 30%
   },
@@ -211,37 +211,37 @@ export const CLEANUP_STRATEGIES: CleanupStrategy[] = [
  * Storage Event Types
  */
 export type StorageEvent =
-  | { type: 'quota_warning'; usage: StorageUsage }
-  | { type: 'quota_exceeded'; usage: StorageUsage }
-  | { type: 'cleanup_started'; strategy: string }
-  | { type: 'cleanup_completed'; result: CleanupResult }
-  | { type: 'cleanup_failed'; error: string }
-  | { type: 'insufficient_space'; requiredBytes: number; availableBytes: number };
+  | { type: "quota_warning"; usage: StorageUsage }
+  | { type: "quota_exceeded"; usage: StorageUsage }
+  | { type: "cleanup_started"; strategy: string }
+  | { type: "cleanup_completed"; result: CleanupResult }
+  | { type: "cleanup_failed"; error: string }
+  | { type: "insufficient_space"; requiredBytes: number; availableBytes: number };
 
 /**
  * Implementation Notes:
- * 
+ *
  * 1. Storage Monitoring:
  *    - Track total embeddings count in sync_metadata table
  *    - Calculate approximate size: (embeddings_count * avg_embedding_size)
  *    - Average embedding size ≈ 10KB (384 floats + content + metadata)
- * 
+ *
  * 2. Cleanup Strategies:
  *    - LRU: Track last_accessed_at timestamp per embedding (requires schema update)
  *    - Oldest First: Remove embeddings with oldest sync_version
  *    - Low Usage: Track access_count per embedding (requires schema update)
  *    - Partial: Keep only embeddings from frequently accessed sources
- * 
+ *
  * 3. Auto-Cleanup Trigger:
  *    - Monitor storage during each sync
  *    - Trigger cleanup when usage > cleanupThreshold
  *    - Stop downloads if insufficient space detected
- * 
+ *
  * 4. Device Storage Check:
  *    - Use React Native FileSystem API to check available space
  *    - Prevent downloads if device storage < minFreeStorageBytes
  *    - Show warnings at warningThreshold
- * 
+ *
  * 5. User Control:
  *    - Allow users to adjust quota limits in settings
  *    - Provide manual cleanup button
