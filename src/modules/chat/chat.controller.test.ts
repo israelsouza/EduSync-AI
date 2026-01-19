@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import { chatController } from "./chat.controller";
+import { chatController, contextService } from "./chat.controller";
 import VectorFactory from "../../lib/vectorFactory";
 import { createLLMService } from "../../lib/llmFactory";
 import { SearchResult } from "../../interface/IVectorService";
@@ -36,6 +36,13 @@ describe("POST /chat - Integration Tests", () => {
     // Reset mocks
     jest.clearAllMocks();
 
+    // Mock ContextService methods
+    jest.spyOn(contextService, "createSession").mockReturnValue("test-session-id");
+    jest.spyOn(contextService, "addMessage").mockImplementation(() => undefined);
+    jest.spyOn(contextService, "getFormattedContext").mockReturnValue("");
+    jest.spyOn(contextService, "sessionExists").mockReturnValue(false);
+    jest.spyOn(contextService, "stopCleanupInterval").mockImplementation(() => undefined);
+
     // Setup mock vector service
     mockVectorService = {
       search: jest.fn(),
@@ -66,6 +73,11 @@ describe("POST /chat - Integration Tests", () => {
     mockNext = jest.fn();
   });
 
+  afterAll(() => {
+    // Stop the cleanup interval to prevent worker process hanging
+    contextService.stopCleanupInterval();
+  });
+
   describe("Success Cases", () => {
     test("should return RAG response for valid query", async () => {
       const mockChunks: SearchResult[] = [
@@ -89,6 +101,7 @@ describe("POST /chat - Integration Tests", () => {
       expect(mockRes.json).toHaveBeenCalledWith(
         expect.objectContaining({
           answer: "Para ensinar subtração com zero, use exemplos visuais como objetos físicos.",
+          sessionId: expect.any(String),
           sources: expect.arrayContaining([
             expect.objectContaining({
               content: "Use visual strategies for teaching subtraction.",
@@ -149,7 +162,8 @@ describe("POST /chat - Integration Tests", () => {
 
       await chatController(mockReq as Request, mockRes as Response, mockNext);
 
-      expect(mockVectorService.search).toHaveBeenCalledWith("How to teach?", 3);
+      // Expect trimmed query + conversation context (first message includes itself)
+      expect(mockVectorService.search).toHaveBeenCalledWith(expect.stringContaining("How to teach?"), 3);
     });
   });
 
@@ -251,7 +265,10 @@ describe("POST /chat - Integration Tests", () => {
       await chatController(mockReq as Request, mockRes as Response, mockNext);
 
       expect(mockRes.status).toHaveBeenCalledWith(200);
-      expect(mockVectorService.search).toHaveBeenCalledWith("What are the best strategies for multi-grade classrooms?", 3);
+      expect(mockVectorService.search).toHaveBeenCalledWith(
+        expect.stringContaining("What are the best strategies for multi-grade classrooms?"),
+        3
+      );
       expect(mockLLMService.generateResponse).toHaveBeenCalled();
     });
 

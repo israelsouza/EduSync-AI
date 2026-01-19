@@ -58,9 +58,10 @@ export class RAGService {
    * Generate a response using the full RAG pipeline
    *
    * @param query - The teacher's question
+   * @param conversationContext - Optional conversation history (not used for vector search, only for LLM prompt)
    * @returns RAG response with answer, sources, and confidence
    */
-  async generateResponse(query: string): Promise<RAGResponse> {
+  async generateResponse(query: string, conversationContext?: string): Promise<RAGResponse> {
     try {
       // Step 1: Retrieve relevant chunks from vector store
       const relevantChunks = await this.vectorService.search(query, this.config.topK);
@@ -84,7 +85,7 @@ export class RAGService {
       const formattedContext = this.formatContext(relevantChunks);
 
       // Step 5: Build the complete prompt
-      const fullPrompt = this.buildPrompt(formattedContext, query);
+      const fullPrompt = this.buildPrompt(formattedContext, query, conversationContext);
 
       // Step 6: Generate response using LLM
       const answer = await this.llmService.generateResponse(fullPrompt);
@@ -146,9 +147,19 @@ ${chunk.content.trim()}`;
 
   /**
    * Build the complete prompt by replacing placeholders in system prompt
+   * @param context - Retrieved context from vector search
+   * @param query - The user's query
+   * @param conversationContext - Optional conversation history to append
    */
-  private buildPrompt(context: string, query: string): string {
-    return SUNITA_SYSTEM_PROMPT.replace("{context}", context).replace("{query}", query);
+  private buildPrompt(context: string, query: string, conversationContext?: string): string {
+    const basePrompt = SUNITA_SYSTEM_PROMPT.replace("{context}", context).replace("{query}", query);
+
+    // Append conversation context if provided (used for multi-turn dialogues)
+    if (conversationContext && conversationContext.trim().length > 0) {
+      return basePrompt + conversationContext;
+    }
+
+    return basePrompt;
   }
 
   /**

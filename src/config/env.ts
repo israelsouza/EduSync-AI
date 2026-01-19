@@ -25,11 +25,11 @@ export const env = {
    * Options:
    * - "local": Uses HuggingFace model (384-dim) running locally. No API key required.
    *   Ideal for offline-first scenarios and privacy. Default value.
-   * - "openai": Uses OpenAI's embedding API. Requires OPENAI_API_KEY.
    * - "google": Uses Google's embedding API. Requires GOOGLE_API_KEY.
    *
    * Note: Local embeddings are generated on-device for privacy and offline capability.
    * Cloud providers offer higher accuracy but require internet and API costs.
+   * Additional cloud providers may be added in future milestones.
    */
   get embeddingProvider(): string {
     return getOptionalEnvVar("EMBEDDING_PROVIDER", "local").toLowerCase();

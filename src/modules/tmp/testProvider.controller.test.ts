@@ -31,7 +31,7 @@ describe("TestProvider Controller", () => {
       generateResponse: jest.fn(),
       getModelInfo: jest.fn().mockReturnValue({
         provider: "google",
-        model: "gemini-2.0-flash-exp",
+        model: "gemini-2.5-flash",
       }),
     } as unknown as jest.Mocked<GoogleLLMService>;
 
@@ -58,7 +58,7 @@ describe("TestProvider Controller", () => {
           success: true,
           model: {
             provider: "google",
-            model: "gemini-2.0-flash-exp",
+            model: "gemini-2.5-flash",
           },
           prompt: mockPrompt,
           response: mockLLMResponse,
