@@ -1,5 +1,21 @@
 # EduSync-AI: Project Context & Guidelines
 
+## Table of Contents (TOC)
+- [Project Overview](#project-overview)
+- [Complete Roadmap - All Milestones](#complete-roadmap)
+  - [Milestone 1: Manual Ingestion](#milestone-1)
+  - [Milestone 2: RAG Response Engine](#milestone-2)
+  - [Milestone 3: Synchronization & Offline-First](#milestone-3)
+  - [Milestone 4: Voice Interface (Mobile STT)](#milestone-4)
+  - [Milestone 5: Validation and Pitch](#milestone-5)
+- [Key Personas](#key-personas)
+- [Problem & Solution](#problem-solution)
+- [Technology Stack](#technology-stack)
+- [Database Schema Documentation](#database-schema)
+- [Future Enhancements](#future-enhancements)
+- [How to contribute](./../FUTURE_ENHANCEMENTS.md#how-to-contribute)
+
+<a id="project-overview"></a>
 ## 🎯 Project Overview
 
 **EduSync-AI** is a solution for the _Innovation for Education Equity Hackathon 2026_ that provides just-in-time coaching for teachers through an offline voice assistant powered by Hybrid RAG (Retrieval-Augmented Generation).
@@ -8,12 +24,16 @@
 
 ---
 
+<a id="complete-roadmap"></a>
 ## 📋 Complete Roadmap - All Milestones
 
-### ✅ Milestone 1: Ingestão de Manuais
-### ✅ Milestone 2: Motor de Resposta RAG
+<a id="milestone-1"></a>
+### ✅ Milestone 1: Manual Ingestion
+<a id="milestone-2"></a>
+### ✅ Milestone 2: RAG Response Engine
 
-### 🔄 Milestone 3: Sincronização e Offline-First
+<a id="milestone-3"></a>
+### 🔄 Milestone 3: Synchronization & Offline-First
 
 **Current Status: 75% Complete (Phase 1: ✅ Complete | Phase 2: ✅ Complete | Phase 3: ✅ Complete)**
 
@@ -43,14 +63,15 @@
 15. [ ] Add offline queue for queries made without connection
 
 **Phase 5: Schema Documentation (independent)**
-16. [ ] [SYNCAI-021] Create database/schema.sql with Supabase table definitions
-17. [ ] Document vector extension configuration (pgvector)
-18. [ ] Add table indexes and performance optimizations
-19. [ ] Create schema migration guide for future updates
+16. [x] [SYNCAI-021] Create database/schema.sql with Supabase table definitions
+17. [x] Document vector extension configuration (pgvector)
+18. [x] Add table indexes and performance optimizations
+19. [x] Create schema migration guide for future updates
 
 ---
 
-### 🎤 Milestone 4: Interface de Voz (Mobile STT)
+<a id="milestone-4"></a>
+### 🎤 Milestone 4: Voice Interface (Mobile STT)
 
 **Current Status: 0% Complete**
 
@@ -82,7 +103,8 @@
 
 ---
 
-### ✅ Milestone 5: Validação e Pitch
+<a id="milestone-5"></a>
+### ✅ Milestone 5: Validation and Pitch
 
 **Current Status: 0% Complete**
 
@@ -117,15 +139,15 @@
 ### 📊 Milestone Dependencies Graph
 
 ```
-Milestone 1 (Ingestão) ✅
+Milestone 1 (Ingestion) ✅
     │
     ▼
-Milestone 2 (Motor de Resposta) ◐ ─────────────────┐
+Milestone 2 (RAG Response Engine) ◐ ─────────────────┐
     │                                               │
     ├──────────────────────┐                        │
     ▼                      ▼                        ▼
 Milestone 3            Milestone 4            Milestone 5
-(Offline-First)        (Interface Voz)        (Validação)
+(Offline-First)        (Voice Interface)        (Validation)
     │                      │                        ▲
     │                      │                        │
     └──────────────────────┴────────────────────────┘
@@ -137,6 +159,7 @@ Milestone 3            Milestone 4            Milestone 5
 
 ---
 
+<a id="key-personas"></a>
 ## 👥 Key Personas
 
 ### Sunita (Primary User)
@@ -146,7 +169,7 @@ Milestone 3            Milestone 4            Milestone 5
 - Teaches mixed-age classes (4th-6th grade) with diverse learning needs
 - **Core Need:** Immediate pedagogical strategies in real-time classroom situations
 
-### CRP (Coordinador de Recursos Pedagógicos)
+### CRP (Coordinator of Pedagogical Resources)
 
 - Mentor providing professional development support
 - Appears rarely with generic advice
@@ -154,6 +177,7 @@ Milestone 3            Milestone 4            Milestone 5
 
 ---
 
+<a id="problem-solution"></a>
 ## 🔴 The Problem
 
 | Issue                               | Impact                                                                                   |
@@ -175,6 +199,7 @@ Milestone 3            Milestone 4            Milestone 5
 
 ---
 
+<a id="user-experience-flow"></a>
 ## 🔄 User Experience Flow
 
 1. **Voice Input:** Teacher presses button/voice command describing classroom problem
@@ -200,6 +225,7 @@ Milestone 3            Milestone 4            Milestone 5
 
 ---
 
+<a id="technology-stack"></a>
 ## 🛠️ Technology Stack
 
 ### Frontend
@@ -293,10 +319,36 @@ src/
 
 This repository handles the backend and infrastructure. The frontend (React Native) is maintained separately in the [EduSync-AI](https://github.com/Sofia-gith/Edusync-AI) repository.
 
+---
+
+<a id="database-schema"></a>
+## 🗄️ Database Schema Documentation
+
+All database documentation and DDL (Supabase) and local storage (WatermelonDB / SQLite) is consolidated in:
+
+- Backend (Supabase): `database/schema.sql` (file with DDL, functions and migration notes)
+- Mobile (WatermelonDB schema): `src/modules/export/mobile-storage.schema.ts`
+
+> Note: keeping documentation centralized in these files avoids divergence between documentation and implementation.
+
+Quick reference:
+- `database/schema.sql` → tables: `pedagogical_knowledge_v384`, `offline_queries`, `embedding_versions` + function `match_documents_v384`
+- `src/modules/export/mobile-storage.schema.ts` → local tables: `embeddings`, `sync_metadata`, `download_queue`
+
+---
+
+<a id="future-enhancements"></a>
+## Future Enhancements
+
+Full list and backlog is tracked in [`FUTURE_ENHANCEMENTS.md`](../FUTURE_ENHANCEMENTS.md).
+
+---
+
 ## 🛡️ Ethical AI & Data Privacy
 
 Privacy First: All voice processing is done locally to ensure teacher and student privacy. Data synced to the cloud is anonymized and used only for improving pedagogical retrieval.
 
+<a id="related-links"></a>
 ## 🔗 Related Links
 
 - **Frontend Repository:** https://github.com/Sofia-gith/Edusync-AI
