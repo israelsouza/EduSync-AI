@@ -61,40 +61,44 @@ export class RAGService {
    * @returns RAG response with answer, sources, and confidence
    */
   async generateResponse(query: string): Promise<RAGResponse> {
-    // Step 1: Retrieve relevant chunks from vector store
-    const relevantChunks = await this.vectorService.search(query, this.config.topK);
+    try {
+      // Step 1: Retrieve relevant chunks from vector store
+      const relevantChunks = await this.vectorService.search(query, this.config.topK);
 
-    // Step 2: Calculate confidence based on similarity scores
-    const confidence = this.calculateConfidence(relevantChunks);
-    const isLowConfidence = confidence < this.config.confidenceThreshold;
+      // Step 2: Calculate confidence based on similarity scores
+      const confidence = this.calculateConfidence(relevantChunks);
+      const isLowConfidence = confidence < this.config.confidenceThreshold;
 
-    // Step 3: Handle low confidence case (Task 9)
-    if (isLowConfidence || relevantChunks.length === 0) {
+      // Step 3: Handle low confidence case (Task 9)
+      if (isLowConfidence || relevantChunks.length === 0) {
+        return {
+          answer: LOW_CONFIDENCE_MESSAGE,
+          sources: relevantChunks,
+          confidence,
+          isLowConfidence: true,
+          model: this.llmService.getModelInfo(),
+        };
+      }
+
+      // Step 4: Format context for LLM (Task 8)
+      const formattedContext = this.formatContext(relevantChunks);
+
+      // Step 5: Build the complete prompt
+      const fullPrompt = this.buildPrompt(formattedContext, query);
+
+      // Step 6: Generate response using LLM
+      const answer = await this.llmService.generateResponse(fullPrompt);
+
       return {
-        answer: LOW_CONFIDENCE_MESSAGE,
+        answer,
         sources: relevantChunks,
         confidence,
-        isLowConfidence: true,
+        isLowConfidence: false,
         model: this.llmService.getModelInfo(),
       };
+    } catch (error) {
+      throw new Error(`RAGService generateResponse error: ${(error as Error).message}`, { cause: error });
     }
-
-    // Step 4: Format context for LLM (Task 8)
-    const formattedContext = this.formatContext(relevantChunks);
-
-    // Step 5: Build the complete prompt
-    const fullPrompt = this.buildPrompt(formattedContext, query);
-
-    // Step 6: Generate response using LLM
-    const answer = await this.llmService.generateResponse(fullPrompt);
-
-    return {
-      answer,
-      sources: relevantChunks,
-      confidence,
-      isLowConfidence: false,
-      model: this.llmService.getModelInfo(),
-    };
   }
 
   /**

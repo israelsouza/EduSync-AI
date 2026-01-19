@@ -1,6 +1,9 @@
 const CLOUD_PROVIDERS = ["google"] as const;
 type CloudProvider = (typeof CLOUD_PROVIDERS)[number];
 
+const SUPPORTED_LLM_PROVIDERS = ["google"] as const;
+type LLMProvider = (typeof SUPPORTED_LLM_PROVIDERS)[number];
+
 const getEnvVar = (key: string, required = true): string => {
   const value = process.env[key];
   if (required && !value) {
@@ -46,7 +49,6 @@ export const env = {
    * Determines which Large Language Model service to use for generating responses.
    *
    * Options:
-   * - "openai": Uses OpenAI's GPT models. Requires OPENAI_API_KEY.
    * - "google": Uses Google's Gemini models. Requires GOOGLE_API_KEY.
    *
    * Note: Unlike embeddings, LLM services are always cloud-based and require API keys.
@@ -56,6 +58,10 @@ export const env = {
    */
   get llmProvider(): string {
     return getEnvVar("LLM_PROVIDER");
+  },
+
+  get isSupportedLLMProvider(): boolean {
+    return SUPPORTED_LLM_PROVIDERS.includes(this.llmProvider as LLMProvider);
   },
 
   // active dependent on provider
@@ -85,6 +91,9 @@ export const env = {
 
     // Validate LLM Provider
     console.log(`🤖 LLM Provider: ${this.llmProvider}`);
+    if (!this.isSupportedLLMProvider) {
+      throw new Error(`Invalid LLM_PROVIDER "${this.llmProvider}". Supported providers: ${SUPPORTED_LLM_PROVIDERS.join(", ")}`);
+    }
     if (this.llmProvider === "google") void this.googleApiKey;
 
     console.log("✅ Configurations validated successfully.");

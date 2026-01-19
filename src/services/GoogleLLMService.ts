@@ -1,7 +1,6 @@
 import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
-import { HumanMessage, SystemMessage } from "@langchain/core/messages";
+import { HumanMessage } from "@langchain/core/messages";
 import { ILLMService } from "../interface/ILLMService.js";
-import { SUNITA_SYSTEM_PROMPT } from "../prompts/systemPrompt.js";
 
 /**
  * Google Gemini LLM Service Implementation
@@ -27,14 +26,58 @@ export class GoogleLLMService implements ILLMService {
   /**
    * Generate a response using Google's Gemini model
    *
-   * @param prompt - The formatted prompt with context and query
+   * @param prompt - The formatted prompt with system instructions, context, and query (pre-formatted by RAGService)
    * @returns Generated response text
+   * @throws {TypeError} If LLM response content is not a string or cannot be converted
+   * @throws {Error} If API call fails or response is invalid
    */
   async generateResponse(prompt: string): Promise<string> {
-    const messages = [new SystemMessage(SUNITA_SYSTEM_PROMPT), new HumanMessage(prompt)];
+    const messages = [new HumanMessage(prompt)];
 
-    const response = await this.model.invoke(messages);
-    return response.content as string;
+    try {
+      const response = await this.model.invoke(messages);
+
+      // Validate response exists
+      if (!response || response.content === undefined || response.content === null) {
+        throw new Error("LLM returned empty or invalid response");
+      }
+
+      // Handle different content types
+      const { content } = response;
+
+      // String: return directly
+      if (typeof content === "string") {
+        return content;
+      }
+
+      // Array: join into single string
+      if (Array.isArray(content)) {
+        return content
+          .map((item) => {
+            if (typeof item === "string") return item;
+            if (typeof item === "object" && item !== null && "text" in item) return String(item.text);
+            return String(item);
+          })
+          .join("");
+      }
+
+      // Object: extract text field or serialize
+      if (typeof content === "object" && "text" in content) {
+        return String((content as { text: unknown }).text);
+      }
+
+      // Fallback: throw TypeError for unsupported types
+      throw new TypeError(`LLM response content must be a string, received ${typeof content}: ${JSON.stringify(content)}`);
+    } catch (error) {
+      // Rethrow TypeError as-is
+      if (error instanceof TypeError) {
+        throw error;
+      }
+
+      // Wrap other errors with context
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      throw new Error(`Failed to generate LLM response: ${errorMessage}`, { cause: error });
+    }
   }
 
   /**

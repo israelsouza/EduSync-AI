@@ -1,6 +1,5 @@
 import { GoogleLLMService } from "./GoogleLLMService";
 import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
-import { SUNITA_SYSTEM_PROMPT } from "../prompts/systemPrompt";
 
 jest.mock("@langchain/google-genai");
 
@@ -50,7 +49,7 @@ describe("GoogleLLMService", () => {
   });
 
   describe("generateResponse", () => {
-    test("should generate response with system and human messages", async () => {
+    test("should generate response with human message only", async () => {
       const mockResponse = {
         content: "Esta é uma estratégia pedagógica para sua sala de aula.",
       };
@@ -61,9 +60,6 @@ describe("GoogleLLMService", () => {
 
       expect(mockInvoke).toHaveBeenCalledTimes(1);
       expect(mockInvoke).toHaveBeenCalledWith([
-        expect.objectContaining({
-          content: SUNITA_SYSTEM_PROMPT,
-        }),
         expect.objectContaining({
           content: prompt,
         }),
@@ -77,10 +73,7 @@ describe("GoogleLLMService", () => {
 
       const response = await service.generateResponse("");
 
-      expect(mockInvoke).toHaveBeenCalledWith([
-        expect.objectContaining({ content: SUNITA_SYSTEM_PROMPT }),
-        expect.objectContaining({ content: "" }),
-      ]);
+      expect(mockInvoke).toHaveBeenCalledWith([expect.objectContaining({ content: "" })]);
       expect(response).toBe(mockResponse.content);
     });
 
@@ -91,7 +84,7 @@ describe("GoogleLLMService", () => {
 
       const response = await service.generateResponse(longPrompt);
 
-      expect(mockInvoke).toHaveBeenCalledWith([expect.anything(), expect.objectContaining({ content: longPrompt })]);
+      expect(mockInvoke).toHaveBeenCalledWith([expect.objectContaining({ content: longPrompt })]);
       expect(response).toBe(mockResponse.content);
     });
 
@@ -114,7 +107,31 @@ describe("GoogleLLMService", () => {
 
       const response = await service.generateResponse("test");
 
-      expect(response).toEqual({ text: "Invalid format" });
+      expect(response).toBe("Invalid format");
+    });
+
+    test("should handle array content responses", async () => {
+      const mockResponse = { content: ["Part 1", " Part 2"] };
+      mockInvoke.mockResolvedValue(mockResponse);
+
+      const response = await service.generateResponse("test");
+
+      expect(response).toBe("Part 1 Part 2");
+    });
+
+    test("should throw TypeError for unsupported content types", async () => {
+      const mockResponse = { content: { data: "no text field" } };
+      mockInvoke.mockResolvedValue(mockResponse);
+
+      await expect(service.generateResponse("test")).rejects.toThrow(TypeError);
+      await expect(service.generateResponse("test")).rejects.toThrow("LLM response content must be a string");
+    });
+
+    test("should throw error for null/undefined content", async () => {
+      const mockResponse = { content: null };
+      mockInvoke.mockResolvedValue(mockResponse);
+
+      await expect(service.generateResponse("test")).rejects.toThrow("LLM returned empty or invalid response");
     });
   });
 
