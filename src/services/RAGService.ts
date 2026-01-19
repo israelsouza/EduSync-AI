@@ -153,12 +153,12 @@ ${chunk.content.trim()}`;
    */
   private buildPrompt(context: string, query: string, conversationContext?: string): string {
     const basePrompt = SUNITA_SYSTEM_PROMPT.replace("{context}", context).replace("{query}", query);
-    
+
     // Append conversation context if provided (used for multi-turn dialogues)
     if (conversationContext && conversationContext.trim().length > 0) {
       return basePrompt + conversationContext;
     }
-    
+
     return basePrompt;
   }
 
