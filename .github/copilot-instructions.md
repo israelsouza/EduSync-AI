@@ -15,32 +15,38 @@
 
 ### 🔄 Milestone 3: Sincronização e Offline-First
 
-**Current Status: 0% Complete**
+**Current Status: 75% Complete (Phase 1: ✅ Complete | Phase 2: ✅ Complete | Phase 3: ✅ Complete)**
 
 **Goal:** Enable teachers to download embeddings and use the system offline on mobile devices.
 
-**Phase 1: Export API (no dependencies)**
-1. [ ] [SYNCAI-014] Create embeddings export endpoint - `GET /api/export/embeddings`
-2. [ ] Implement JSON/Vector Bundle format for mobile consumption
-3. [ ] Add compression (gzip) for bandwidth optimization
-4. [ ] Version control for embedding bundles
+**Phase 1: Export API (no dependencies)** ✅
+1. [x] [SYNCAI-014] Create embeddings export endpoint - `GET /api/export/embeddings`
+2. [x] Implement JSON/Vector Bundle format for mobile consumption
+3. [x] Add compression (gzip) for bandwidth optimization
+4. [x] Version control for embedding bundles
 
-**Phase 2: Mobile Storage (depends on Phase 1)**
-5. [ ] [SYNCAI-015] Define local storage schema (WatermelonDB or SQLite)
-6. [ ] Implement download manager service
-7. [ ] Create cache invalidation logic
-8. [ ] Add storage quota management
+**Phase 2: Mobile Storage (depends on Phase 1)** ✅
+5. [x] [SYNCAI-015] Define local storage schema (WatermelonDB or SQLite)
+6. [x] Implement download manager service
+7. [x] Create cache invalidation logic
+8. [x] Add storage quota management
 
-**Phase 3: Sync Mechanism (depends on Phase 2)**
-9. [ ] [SYNCAI-016] Implement connectivity detection service
-10. [ ] Create background sync scheduler
-11. [ ] Add delta sync (only download changed embeddings)
-12. [ ] Implement conflict resolution strategy
+**Phase 3: Sync Mechanism (depends on Phase 2)** ✅
+9. [x] [SYNCAI-016] Implement connectivity detection service
+10. [x] Create background sync scheduler
+11. [x] Add delta sync (only download changed embeddings)
+12. [x] Implement conflict resolution strategy
 
 **Phase 4: Offline RAG (depends on Phase 3)**
 13. [ ] Port vector search to run locally on device
 14. [ ] Implement local embedding generation (optional)
 15. [ ] Add offline queue for queries made without connection
+
+**Phase 5: Schema Documentation (independent)**
+16. [ ] [SYNCAI-021] Create database/schema.sql with Supabase table definitions
+17. [ ] Document vector extension configuration (pgvector)
+18. [ ] Add table indexes and performance optimizations
+19. [ ] Create schema migration guide for future updates
 
 ---
 
