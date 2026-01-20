@@ -90,13 +90,23 @@ export const MOBILE_EMBEDDING_MODELS = {
    * - Dimensions: 384
    * - Speed: ~100ms per query
    * - Quality: Better for Portuguese/Spanish
+   *
+   * NOTE: This model is currently DISABLED due to HuggingFace returning HTTP 401
+   * for the direct ONNX download URL. The model exists but requires authentication
+   * or a different download approach (e.g., using transformers.js library).
+   *
+   * TODO: Re-enable when a working download URL is available or implement
+   * alternative download method via transformers.js auto-download.
+   *
+   * Original URL (returns 401):
+   * https://huggingface.co/Xenova/multilingual-MiniLM-L12-v2/resolve/main/onnx/model_quantized.onnx
    */
-  multilingualMiniLM: {
-    name: "Xenova/multilingual-MiniLM-L12-v2",
-    sizeBytes: 118 * 1024 * 1024,
-    dimensions: 384,
-    downloadUrl: "https://huggingface.co/Xenova/multilingual-MiniLM-L12-v2/resolve/main/onnx/model_quantized.onnx",
-  },
+  // multilingualMiniLM: {
+  //   name: "Xenova/multilingual-MiniLM-L12-v2",
+  //   sizeBytes: 118 * 1024 * 1024,
+  //   dimensions: 384,
+  //   downloadUrl: "<requires authentication or transformers.js>",
+  // },
 };
 
 /**

@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from "express";
+import { createHash } from "crypto";
 import { AppError } from "../../shared/AppError.js";
 import supabase from "../../lib/supabaseClient.js";
 
@@ -180,15 +181,18 @@ export const getQueryStatsController = async (_: Request, res: Response, next: N
 };
 
 /**
- * Simple hash function for device ID anonymization
- * In production, use a proper cryptographic hash
+ * Salt for device ID hashing (should be set via environment variable)
+ * If not set, uses a default value (not recommended for production)
+ */
+const DEVICE_HASH_SALT = process.env["DEVICE_HASH_SALT"] || "edusync-default-salt";
+
+/**
+ * Cryptographic hash function for device ID anonymization
+ * Uses SHA-256 with a secret salt to prevent rainbow table attacks
  */
 function hashDeviceId(deviceId: string): string {
-  let hash = 0;
-  for (let i = 0; i < deviceId.length; i++) {
-    const char = deviceId.charCodeAt(i);
-    hash = (hash << 5) - hash + char;
-    hash = hash & hash; // Convert to 32bit integer
-  }
-  return `anon_${Math.abs(hash).toString(16)}`;
+  const hash = createHash("sha256")
+    .update(DEVICE_HASH_SALT + deviceId)
+    .digest("hex");
+  return `anon_${hash.substring(0, 16)}`; // Return first 16 chars for brevity
 }

@@ -42,7 +42,7 @@ BEGIN
     p.metadata,
     1 - (p.embedding <=> query_embedding) AS similarity
   FROM pedagogical_knowledge_v384 p
-  WHERE (filter = '{}'::jsonb OR (filter = '{}'::jsonb) IS FALSE) -- placeholder for future filtering
+  WHERE (filter = '{}'::jsonb OR p.metadata @> filter)
   ORDER BY p.embedding <=> query_embedding
   LIMIT match_count;
 END;

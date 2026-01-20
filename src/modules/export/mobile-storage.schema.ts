@@ -66,7 +66,7 @@ export interface OfflineQuerySchema {
   id: string; // Primary Key - UUID generated on device
   query: string; // Teacher's query text
   response: string; // Response provided (offline or cached)
-  timestamp: string; // ISO timestamp when query was made
+  timestamp: number; // Unix timestamp in milliseconds when query was made
   status: "pending" | "syncing" | "synced" | "failed"; // Sync status
   priority: "low" | "normal" | "high"; // Priority for sync
   retry_count: number; // Number of sync attempts

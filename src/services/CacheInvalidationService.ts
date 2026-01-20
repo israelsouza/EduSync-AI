@@ -64,18 +64,23 @@ export class CacheInvalidationService implements ICacheInvalidationService {
    * Fetch latest version from backend (embedding_versions table)
    */
   async getLatestVersion(): Promise<string> {
-    const { data, error } = await supabase
-      .from("embedding_versions")
-      .select("version")
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .single();
+    try {
+      const { data, error } = await supabase
+        .from("embedding_versions")
+        .select("version")
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .single();
 
-    if (error || !data) {
-      return generateVersion(); // If no version exists
+      if (error || !data) {
+        return generateVersion(); // If no version exists
+      }
+
+      return data.version;
+    } catch (error) {
+      console.error("[CacheInvalidationService.getLatestVersion] Error fetching latest version:", error);
+      throw error;
     }
-
-    return data.version;
   }
 
   /**
@@ -122,30 +127,62 @@ export class CacheInvalidationService implements ICacheInvalidationService {
   }
 
   /**
+   * Validates version string format (YYYY.MM.DD.HHMMSS)
+   * @example "2026.01.19.143052" is valid
+   */
+  private isValidVersionFormat(version: string): boolean {
+    // Format: YYYY.MM.DD.HHMMSS (e.g., 2026.01.19.143052)
+    const versionRegex = /^\d{4}\.\d{2}\.\d{2}\.\d{6}$/;
+    if (!versionRegex.test(version)) {
+      return false;
+    }
+
+    // Additional validation: check date parts are reasonable
+    const parts = version.split(".").map(Number);
+    const year = parts[0] ?? 0;
+    const month = parts[1] ?? 0;
+    const day = parts[2] ?? 0;
+
+    if (month < 1 || month > 12) return false;
+    if (day < 1 || day > 31) return false;
+    if (year < 2020 || year > 2100) return false; // reasonable year range
+
+    return true;
+  }
+
+  /**
    * Get embeddings that need to be updated (delta sync)
    * Returns IDs of embeddings updated after the local version
    */
   async getDeltaUpdateList(localVersion: string): Promise<string[]> {
-    // Parse version to timestamp (format: YYYY.MM.DD.HHMMSS)
-    const versionParts = localVersion.split(".");
-    if (versionParts.length !== 4) {
-      return []; // Invalid version, client should do full sync
+    try {
+      // Validate version format before processing
+      if (!this.isValidVersionFormat(localVersion)) {
+        console.warn(`Invalid version format: "${localVersion}". Expected YYYY.MM.DD.HHMMSS`);
+        // Return empty array for invalid versions (client should do full sync)
+        return [];
+      }
+
+      // Parse version to timestamp (format: YYYY.MM.DD.HHMMSS)
+      const versionParts = localVersion.split(".");
+      const [year, month, day, time] = versionParts;
+      const hours = time?.substring(0, 2) || "00";
+      const minutes = time?.substring(2, 4) || "00";
+      const seconds = time?.substring(4, 6) || "00";
+
+      const sinceTimestamp = `${year}-${month}-${day}T${hours}:${minutes}:${seconds}Z`;
+
+      const { data, error } = await supabase.from("pedagogical_knowledge_v384").select("id").gt("created_at", sinceTimestamp);
+
+      if (error || !data) {
+        return [];
+      }
+
+      return data.map((row) => row.id);
+    } catch (error) {
+      console.error("[CacheInvalidationService.getDeltaUpdateList] Error fetching delta update list:", error);
+      throw error;
     }
-
-    const [year, month, day, time] = versionParts;
-    const hours = time?.substring(0, 2) || "00";
-    const minutes = time?.substring(2, 4) || "00";
-    const seconds = time?.substring(4, 6) || "00";
-
-    const sinceTimestamp = `${year}-${month}-${day}T${hours}:${minutes}:${seconds}Z`;
-
-    const { data, error } = await supabase.from("pedagogical_knowledge_v384").select("id").gt("created_at", sinceTimestamp);
-
-    if (error || !data) {
-      return [];
-    }
-
-    return data.map((row) => row.id);
   }
 
   /**
@@ -153,15 +190,20 @@ export class CacheInvalidationService implements ICacheInvalidationService {
    * Checks if embeddings have correct dimensions and structure
    */
   async validateIntegrity(): Promise<boolean> {
-    // For backend, we validate the database integrity
-    const { count, error } = await supabase.from("pedagogical_knowledge_v384").select("*", { count: "exact", head: true });
+    try {
+      // For backend, we validate the database integrity
+      const { count, error } = await supabase.from("pedagogical_knowledge_v384").select("*", { count: "exact", head: true });
 
-    if (error) {
-      return false;
+      if (error) {
+        return false;
+      }
+
+      // Basic validation: ensure we have embeddings
+      return (count ?? 0) > 0;
+    } catch (error) {
+      console.error("[CacheInvalidationService.validateIntegrity] Error validating integrity:", error);
+      throw error;
     }
-
-    // Basic validation: ensure we have embeddings
-    return (count ?? 0) > 0;
   }
 
   /**
@@ -192,14 +234,19 @@ export class CacheInvalidationService implements ICacheInvalidationService {
    * Called after ingesting new content
    */
   async registerVersion(version: string, notes?: string): Promise<void> {
-    const { error } = await supabase.from("embedding_versions").insert({
-      version,
-      notes: notes || `Version ${version} registered`,
-      created_at: new Date().toISOString(),
-    });
+    try {
+      const { error } = await supabase.from("embedding_versions").insert({
+        version,
+        notes: notes || `Version ${version} registered`,
+        created_at: new Date().toISOString(),
+      });
 
-    if (error) {
-      throw new Error(`Failed to register version: ${error.message}`);
+      if (error) {
+        throw new Error(`Failed to register version: ${error.message}`);
+      }
+    } catch (error) {
+      console.error("[CacheInvalidationService.registerVersion] Error registering version:", error);
+      throw error;
     }
   }
 
@@ -207,17 +254,22 @@ export class CacheInvalidationService implements ICacheInvalidationService {
    * Get version history
    */
   async getVersionHistory(limit = 10): Promise<{ version: string; created_at: string; notes: string }[]> {
-    const { data, error } = await supabase
-      .from("embedding_versions")
-      .select("version, created_at, notes")
-      .order("created_at", { ascending: false })
-      .limit(limit);
+    try {
+      const { data, error } = await supabase
+        .from("embedding_versions")
+        .select("version, created_at, notes")
+        .order("created_at", { ascending: false })
+        .limit(limit);
 
-    if (error || !data) {
-      return [];
+      if (error || !data) {
+        return [];
+      }
+
+      return data;
+    } catch (error) {
+      console.error("[CacheInvalidationService.getVersionHistory] Error fetching version history:", error);
+      throw error;
     }
-
-    return data;
   }
 }
 

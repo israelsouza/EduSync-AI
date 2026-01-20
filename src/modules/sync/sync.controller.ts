@@ -200,6 +200,51 @@ interface CheckEligibilityRequest {
 }
 
 /**
+ * Validates CheckEligibilityRequest body at runtime
+ */
+function validateCheckEligibilityRequest(body: unknown): { valid: true; data: CheckEligibilityRequest } | { valid: false; error: string } {
+  if (!body || typeof body !== "object") {
+    return { valid: false, error: "Request body must be an object" };
+  }
+
+  const b = body as Record<string, unknown>;
+
+  // Required: localVersion must be string
+  if (typeof b["localVersion"] !== "string" || !b["localVersion"]) {
+    return { valid: false, error: "localVersion (string) is required" };
+  }
+
+  // Validate semantic version format (major.minor.patch or timestamp-based YYYY.MM.DD.HHMMSS)
+  const semverPattern = /^\d+\.\d+\.\d+(?:[-+][\w.-]+)?$|^\d{4}\.\d{2}\.\d{2}\.\d{6}$/;
+  if (!semverPattern.test(b["localVersion"])) {
+    return { valid: false, error: "localVersion must be a valid semantic version" };
+  }
+
+  // Required: connectionType must be valid enum
+  const validConnectionTypes = ["wifi", "cellular", "ethernet", "unknown"];
+  if (!validConnectionTypes.includes(b["connectionType"] as string)) {
+    return { valid: false, error: "connectionType must be one of: wifi, cellular, ethernet, unknown" };
+  }
+
+  // Required: batteryLevel must be number between 0 and 100
+  if (typeof b["batteryLevel"] !== "number" || b["batteryLevel"] < 0 || b["batteryLevel"] > 100) {
+    return { valid: false, error: "batteryLevel must be a number between 0 and 100" };
+  }
+
+  // Required: isCharging must be boolean
+  if (typeof b["isCharging"] !== "boolean") {
+    return { valid: false, error: "isCharging must be a boolean" };
+  }
+
+  // Required: freeStorageBytes must be non-negative number
+  if (typeof b["freeStorageBytes"] !== "number" || b["freeStorageBytes"] < 0) {
+    return { valid: false, error: "freeStorageBytes must be a non-negative number" };
+  }
+
+  return { valid: true, data: b as unknown as CheckEligibilityRequest };
+}
+
+/**
  * Check Sync Eligibility Controller
  *
  * Validates if the device is eligible to sync based on:
@@ -210,7 +255,19 @@ interface CheckEligibilityRequest {
  */
 export const checkEligibilityController = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const { localVersion, connectionType, batteryLevel, isCharging, freeStorageBytes } = req.body as CheckEligibilityRequest;
+    const validation = validateCheckEligibilityRequest(req.body);
+    if (!validation.valid) {
+      res.status(400).json({
+        success: false,
+        error: {
+          code: "INVALID_REQUEST",
+          message: validation.error,
+        },
+      });
+      return;
+    }
+
+    const { localVersion, connectionType, batteryLevel, isCharging, freeStorageBytes } = validation.data;
 
     const blockingReasons: string[] = [];
     const syncRules = DEFAULT_SYNC_RULES;
