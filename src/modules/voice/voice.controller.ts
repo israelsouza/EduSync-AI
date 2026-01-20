@@ -30,6 +30,8 @@ import { createLLMService } from "../../lib/llmFactory.js";
 import { RAGService } from "../../services/RAGService.js";
 import { SearchResult } from "../../interface/IVectorService.js";
 import { createSTTService } from "../../lib/sttFactory.js";
+import { createTTSService } from "../../lib/ttsFactory.js";
+import { ITTSService } from "../../interface/ITTSService.js";
 
 // ============================================================================
 // In-Memory Session Store (Replace with Redis/Database in production)
@@ -89,6 +91,16 @@ async function getRagService(): Promise<RAGService> {
   return ragServiceInstance;
 }
 
+// TTS service singleton (lazy)
+let ttsServiceInstance: ITTSService | null = null;
+async function getTTSService(): Promise<ITTSService> {
+  if (!ttsServiceInstance) {
+    ttsServiceInstance = createTTSService();
+    await ttsServiceInstance.initialize();
+  }
+  return ttsServiceInstance;
+}
+
 // ============================================================================
 // Helper Functions
 // ============================================================================
@@ -145,7 +157,7 @@ export const startSessionController = async (req: Request, res: Response, next: 
         modelsUsed: {
           stt: "whisper-small-pt", // Placeholder - would come from actual service
           tts: "piper-sunita-pt-br",
-          llm: "gemini-1.5-flash",
+          llm: "gemini-2.5-flash",
         },
       },
     };
@@ -261,14 +273,32 @@ export const textInputController = async (req: Request, res: Response, next: Nex
     const ragEndTime = Date.now();
     timestamps.responseGenerated = new Date().toISOString();
 
-    // TTS synthesis placeholder (would use actual TTS service)
+    // TTS synthesis (using real TTS service)
     let audioBase64: string | undefined;
     let audioDurationMs: number | undefined;
+    let ttsTimeMs = 0;
 
     if (speakResponse) {
-      // Placeholder: In real implementation, call TTS service
-      audioBase64 = undefined; // TTS not yet implemented
-      audioDurationMs = undefined;
+      try {
+        const ttsStartTime = Date.now();
+        const tts = await getTTSService();
+        const synthesisResult = await tts.synthesize(ragResponse.answer, {
+          voiceId: session.language === "pt-BR" ? "sunita-pt-br" : session.language === "es-419" ? "sunita-es-419" : "sunita-en-us",
+          outputFormat: "mp3",
+          rate: 1.0,
+        });
+        ttsTimeMs = Date.now() - ttsStartTime;
+
+        // Convert ArrayBuffer to Base64
+        audioBase64 = Buffer.from(synthesisResult.audioData).toString("base64");
+        audioDurationMs = synthesisResult.durationMs;
+
+        sessionStore.stats.totalTtsTimeMs += ttsTimeMs;
+        console.log(`[Voice] TTS synthesis completed in ${ttsTimeMs}ms`);
+      } catch (ttsError) {
+        console.error("[Voice] TTS synthesis failed:", ttsError);
+        // Continue without audio - graceful degradation
+      }
     }
 
     timestamps.responseComplete = new Date().toISOString();
@@ -375,7 +405,7 @@ export const audioInputController = async (req: Request, res: Response, next: Ne
     const audioBuffer = Buffer.from(audioBase64, "base64");
     const stt = createSTTService();
     const transcription = await stt.transcribe(audioBuffer.buffer, {
-      encoding: format as any,
+      encoding: format,
       sampleRateHertz: sampleRate,
       language: session.language,
     });
@@ -401,10 +431,31 @@ export const audioInputController = async (req: Request, res: Response, next: Ne
     const ragEndTime = Date.now();
     timestamps.responseGenerated = new Date().toISOString();
 
-    // 3. TTS placeholder
+    // 3. TTS synthesis (using real TTS service)
     let audioResponseBase64: string | undefined;
+    let audioDurationMs: number | undefined;
+    let ttsTimeMs = 0;
+
     if (speakResponse) {
-      // Placeholder
+      try {
+        const ttsStartTime = Date.now();
+        const tts = await getTTSService();
+        const synthesisResult = await tts.synthesize(ragResponse.answer, {
+          voiceId: session.language === "pt-BR" ? "sunita-pt-br" : session.language === "es-419" ? "sunita-es-419" : "sunita-en-us",
+          outputFormat: "mp3",
+          rate: 1.0,
+        });
+        ttsTimeMs = Date.now() - ttsStartTime;
+
+        audioResponseBase64 = Buffer.from(synthesisResult.audioData).toString("base64");
+        audioDurationMs = synthesisResult.durationMs;
+
+        sessionStore.stats.totalTtsTimeMs += ttsTimeMs;
+        console.log(`[Voice] TTS synthesis completed in ${ttsTimeMs}ms`);
+      } catch (ttsError) {
+        console.error("[Voice] TTS synthesis failed:", ttsError);
+        // Continue without audio - graceful degradation
+      }
     }
 
     timestamps.responseComplete = new Date().toISOString();
@@ -445,6 +496,7 @@ export const audioInputController = async (req: Request, res: Response, next: Ne
         turn,
         response: ragResponse.answer,
         ...(audioResponseBase64 && { audioBase64: audioResponseBase64 }),
+        ...(audioDurationMs && { audioDurationMs }),
         ragSources: ragResponse.sources?.map((s: SearchResult) => {
           const meta = s.metadata as Record<string, unknown> | undefined;
           return {

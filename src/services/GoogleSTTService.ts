@@ -43,8 +43,9 @@ export class GoogleSTTService implements ISTTService {
       const mimeType = this.getMimeType(activeConfig.encoding);
 
       // Call Gemini API via REST (Multimodal Transcription)
-      const model = env.googleModel;
-      const url = `https://generativelanguage.googleapis.com/v1/models/${model}:generateContent?key=${this.apiKey}`;
+      // Use specific STT model that supports audio input
+      const model = env.googleSTTModel;
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${this.apiKey}`;
 
       console.log(`[GoogleSTT] Requesting transcription...`);
       console.log(`[GoogleSTT] Model: ${model}`);
