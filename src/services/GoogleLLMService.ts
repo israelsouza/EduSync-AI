@@ -12,7 +12,7 @@ export class GoogleLLMService implements ILLMService {
   private model: ChatGoogleGenerativeAI;
   private modelName: string;
 
-  constructor(apiKey: string, modelName = "gemini-2.5-flash") {
+  constructor(apiKey: string, modelName = "gemini-1.5-flash") {
     this.modelName = modelName;
     this.model = new ChatGoogleGenerativeAI({
       apiKey: apiKey,
