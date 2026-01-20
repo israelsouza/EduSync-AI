@@ -14,10 +14,7 @@ export function createLLMService(): ILLMService {
 
   switch (provider) {
     case "google":
-      if (!env.googleApiKey) {
-        throw new AppError("GOOGLE_API_KEY is required when LLM_PROVIDER=google", 500);
-      }
-      return new GoogleLLMService(env.googleApiKey);
+      return new GoogleLLMService();
 
     default:
       throw new AppError(`Unknown LLM provider: ${provider}. Supported: google`, 400);

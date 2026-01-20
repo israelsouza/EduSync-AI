@@ -29,6 +29,7 @@ import VectorFactory from "../../lib/vectorFactory.js";
 import { createLLMService } from "../../lib/llmFactory.js";
 import { RAGService } from "../../services/RAGService.js";
 import { SearchResult } from "../../interface/IVectorService.js";
+import { createSTTService } from "../../lib/sttFactory.js";
 
 // ============================================================================
 // In-Memory Session Store (Replace with Redis/Database in production)
@@ -132,8 +133,6 @@ export const startSessionController = async (req: Request, res: Response, next: 
     const sessionId = generateSessionId();
     const now = new Date().toISOString();
 
-    console.log("sessionId: ", sessionId)
-
     const session: VoiceSession = {
       id: sessionId,
       startedAt: now,
@@ -150,8 +149,6 @@ export const startSessionController = async (req: Request, res: Response, next: 
         },
       },
     };
-
-    console.log("session: ", session.id)
 
     sessionStore.sessions.set(sessionId, session);
     sessionStore.stats.totalSessions++;
@@ -352,7 +349,7 @@ export const audioInputController = async (req: Request, res: Response, next: Ne
       throw new AppError(`Session ID is required (${VOICE_ERROR_CODES.INVALID_REQUEST})`, 400);
     }
 
-    const { audioBase64, format } = req.body as AudioInputRequest;
+    const { audioBase64, format, sampleRate = 16000, speakResponse = false } = req.body as AudioInputRequest;
 
     if (!audioBase64 || typeof audioBase64 !== "string") {
       throw new AppError(`Audio data is required (${VOICE_ERROR_CODES.AUDIO_FORMAT_INVALID})`, 400);
@@ -363,20 +360,103 @@ export const audioInputController = async (req: Request, res: Response, next: Ne
       throw new AppError(`Invalid audio format: ${format} (${VOICE_ERROR_CODES.AUDIO_FORMAT_INVALID})`, 400);
     }
 
-    // Validate session exists (even though we don't use it yet)
-    getSession(sessionId);
+    const session = getSession(sessionId);
+    const turnNumber = session.turns.length + 1;
+    const turnId = generateTurnId();
 
-    // For now, return a placeholder response since STT is not yet implemented
-    res.status(501).json({
-      success: false,
-      error: {
-        code: VOICE_ERROR_CODES.STT_MODEL_NOT_READY,
-        message: "Audio processing not yet implemented. Please use /text endpoint for text-based interaction.",
-        stage: "stt",
-        recoverable: true,
-        suggestions: ["Use POST /api/voice/sessions/:sessionId/text for text-based interaction"],
-      },
+    const timestamps = {
+      started: new Date().toISOString(),
+      transcriptionComplete: "",
+      responseGenerated: "",
+      responseComplete: "",
+    };
+
+    // 1. Transcribe audio
+    const audioBuffer = Buffer.from(audioBase64, "base64");
+    const stt = createSTTService();
+    const transcription = await stt.transcribe(audioBuffer.buffer, {
+      encoding: format as any,
+      sampleRateHertz: sampleRate,
+      language: session.language,
     });
+
+    timestamps.transcriptionComplete = new Date().toISOString();
+    const transcribedText = transcription.alternatives[0]?.transcript || "";
+
+    if (!transcribedText) {
+      throw new AppError("Speech not recognized", 400);
+    }
+
+    // 2. Get RAG response (same logic as text input)
+    const ragStartTime = Date.now();
+    const conversationHistory = session.turns
+      .slice(-3)
+      .map((t) => t.transcription.alternatives[0]?.transcript || "")
+      .filter((p) => p.length > 0)
+      .join("\n");
+
+    const rag = await getRagService();
+    const ragResponse = await rag.generateResponse(transcribedText, conversationHistory);
+
+    const ragEndTime = Date.now();
+    timestamps.responseGenerated = new Date().toISOString();
+
+    // 3. TTS placeholder
+    let audioResponseBase64: string | undefined;
+    if (speakResponse) {
+      // Placeholder
+    }
+
+    timestamps.responseComplete = new Date().toISOString();
+    const totalProcessingTimeMs = Date.now() - new Date(timestamps.started).getTime();
+
+    // 4. Create turn record
+    const turn: VoiceTurn = {
+      id: turnId,
+      turnNumber,
+      userAudio: {
+        chunks: [],
+        durationMs: transcription.audioDurationMs,
+      },
+      transcription: {
+        ...transcription,
+        id: transcription.id || `transcription_${turnId}`,
+      },
+      assistantResponse: ragResponse.answer,
+      wasInterrupted: false,
+      ragContextIds: ragResponse.sources
+        ?.map((s: SearchResult) => s.metadata?.id || "unknown")
+        .filter((id): id is string => id !== undefined),
+      timestamps,
+      totalProcessingTimeMs,
+    };
+
+    session.turns.push(turn);
+
+    // Update stats
+    sessionStore.stats.totalTurns++;
+    sessionStore.stats.totalTranscriptionTimeMs += Date.now() - new Date(timestamps.started).getTime();
+    sessionStore.stats.totalRagTimeMs += ragEndTime - ragStartTime;
+    sessionStore.stats.totalTurnTimeMs += totalProcessingTimeMs;
+
+    const response: VoiceInteractionResponse = {
+      success: true,
+      data: {
+        turn,
+        response: ragResponse.answer,
+        ...(audioResponseBase64 && { audioBase64: audioResponseBase64 }),
+        ragSources: ragResponse.sources?.map((s: SearchResult) => {
+          const meta = s.metadata as Record<string, unknown> | undefined;
+          return {
+            id: meta?.["id"] ? String(meta["id"]) : "unknown",
+            title: meta?.["source"] ? String(meta["source"]) : "Unknown",
+            similarity: s.score ?? 0,
+          };
+        }),
+      },
+    };
+
+    res.status(200).json(response);
   } catch (error) {
     sessionStore.stats.errorCount++;
     next(error);

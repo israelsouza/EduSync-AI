@@ -1,6 +1,7 @@
 import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
 import { HumanMessage } from "@langchain/core/messages";
 import { ILLMService } from "../interface/ILLMService.js";
+import { env } from "../config/env.js";
 
 /**
  * Google Gemini LLM Service Implementation
@@ -12,10 +13,11 @@ export class GoogleLLMService implements ILLMService {
   private model: ChatGoogleGenerativeAI;
   private modelName: string;
 
-  constructor(apiKey: string, modelName = "gemini-1.5-flash") {
+  constructor(apiKey?: string, modelName = env.googleModel) {
     this.modelName = modelName;
+    const finalApiKey = apiKey || env.googleApiKey;
     this.model = new ChatGoogleGenerativeAI({
-      apiKey: apiKey,
+      apiKey: finalApiKey,
       model: this.modelName,
       temperature: 1.0,
       maxOutputTokens: 1024,

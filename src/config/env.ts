@@ -64,9 +64,27 @@ export const env = {
     return SUPPORTED_LLM_PROVIDERS.includes(this.llmProvider as LLMProvider);
   },
 
+  /**
+   * Google Model Configuration
+   */
+  get googleModel(): string {
+    return getOptionalEnvVar("GOOGLE_MODEL", "gemini-flash-latest");
+  },
+
+  /**
+   * STT Provider Configuration
+   */
+  get sttProvider(): string {
+    return getOptionalEnvVar("STT_PROVIDER", "google").toLowerCase();
+  },
+
   // active dependent on provider
   get googleApiKey(): string {
     return getEnvVar("GOOGLE_API_KEY");
+  },
+
+  get openaiApiKey(): string {
+    return getOptionalEnvVar("OPENAI_API_KEY");
   },
 
   get supabaseUrl(): string {
@@ -95,6 +113,10 @@ export const env = {
       throw new Error(`Invalid LLM_PROVIDER "${this.llmProvider}". Supported providers: ${SUPPORTED_LLM_PROVIDERS.join(", ")}`);
     }
     if (this.llmProvider === "google") void this.googleApiKey;
+
+    // Validate STT
+    console.log(`🎙️ STT Provider: ${this.sttProvider}`);
+    console.log(`🎯 Google Model: ${this.googleModel}`);
 
     console.log("✅ Configurations validated successfully.");
   },
