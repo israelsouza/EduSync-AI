@@ -4,6 +4,13 @@ This document tracks features and improvements that can be implemented in the fu
 
 ---
 
+**Last updated:** January 19, 2026  
+**Contributors:** EduSync-AI Team  
+<a id="how-to-contribute"></a>
+**How to contribute:** Open an issue in the repository with the `enhancement` tag to suggest new improvements!
+
+---
+
 ## 📊 Usage Analytics and Telemetry
 
 **Main reason:** Obtain real-world usage data for continuous system improvement and understanding of educational impact.
@@ -198,6 +205,34 @@ This document tracks features and improvements that can be implemented in the fu
 
 ---
 
-**Last updated:** January 18, 2026  
-**Contributors:** EduSync-AI Team  
-**How to contribute:** Open an issue in the repository with the `enhancement` tag to suggest new improvements!
+## 🧩 Support for Multi-Dimension Embeddings (Option C)
+
+**Main reason:** Allow the backend to support multiple embedding models/dimensions and give mobile apps the choice of which model to download.
+
+**Design options:**
+
+- **Option A (Current - Single 384-dim):** Keep `pedagogical_knowledge_v384` and `match_documents_v384` as the canonical source. Simple, low storage, low complexity.
+- **Option B (Multiple tables per dimension):** Create separate tables/functions per dimension (e.g., `pedagogical_knowledge_v384`, `pedagogical_knowledge_v768`). Flexible but increases backend and sync complexity.
+- **Option C (Dynamic / Recommended for later):** One table with `embedding` (variable), `dimension` and `model_name`, plus per-dimension ANN indexes. Best flexibility but requires careful index and migration planning.
+
+**Backend changes required (if adopting Option C):**
+
+1. Add `EMBEDDING_DIMENSION` and `EMBEDDING_MODEL` env variables and configuration.
+2. Create `database/schema.sql` including dynamic schema and versioning tables (already drafted in repo).
+3. Update `LocalVectorService` and `export.controller` to accept/read `dimension` and `model_name`.
+4. Add `/api/models` endpoint to list available embedding options and versions.
+
+**Mobile changes required:**
+
+1. Add `embedding_dimension` and `embedding_model` to `sync_metadata`.
+2. Validate downloaded embeddings match expected dimension and re-download if mismatched.
+3. Update download manager to request specific model bundles.
+
+**Migration path (example):**
+
+- `v1.0` → 384-dim only (current)
+- `v1.1` → Add `dimension` column and `model_name` metadata (no migration needed initially)
+- `v2.0` → Support additional dimensions (e.g., 768-dim) with testing and rollout
+
+**Privacy & UX notes:** Only offer model switching/downloads with explicit user consent and clear messaging about storage and data usage.
+

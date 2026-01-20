@@ -1,5 +1,22 @@
 # EduSync-AI: Project Context & Guidelines
 
+## Table of Contents (TOC)
+- [Project Overview](#project-overview)
+- [Complete Roadmap - All Milestones](#complete-roadmap)
+  - [Milestone 1: Manual Ingestion](#milestone-1)
+  - [Milestone 2: RAG Response Engine](#milestone-2)
+  - [Milestone 3: Synchronization & Offline-First](#milestone-3)
+  - [Milestone 4: Voice Interface (Mobile STT)](#milestone-4)
+  - [Milestone 5: Validation and Pitch](#milestone-5)
+- [Frontend Implementation Guide](#frontend-implementation)
+- [Key Personas](#key-personas)
+- [Problem & Solution](#problem-solution)
+- [Technology Stack](#technology-stack)
+- [Database Schema Documentation](#database-schema)
+- [Future Enhancements](#future-enhancements)
+- [How to contribute](./../FUTURE_ENHANCEMENTS.md#how-to-contribute)
+
+<a id="project-overview"></a>
 ## 🎯 Project Overview
 
 **EduSync-AI** is a solution for the _Innovation for Education Equity Hackathon 2026_ that provides just-in-time coaching for teachers through an offline voice assistant powered by Hybrid RAG (Retrieval-Augmented Generation).
@@ -8,49 +25,328 @@
 
 ---
 
-## 📋 Complete Roadmap - All Milestones
+<a id="frontend-implementation"></a>
+## 📱 Frontend Implementation Guide (React Native)
 
-### ✅ Milestone 1: Ingestão de Manuais
-### ✅ Milestone 2: Motor de Resposta RAG
+This section documents all services and components that need to be implemented in the [EduSync-AI Frontend](https://github.com/Sofia-gith/Edusync-AI) repository to complete the offline-first functionality.
 
-### 🔄 Milestone 3: Sincronização e Offline-First
+### Backend API Endpoints Available
 
-**Current Status: 75% Complete (Phase 1: ✅ Complete | Phase 2: ✅ Complete | Phase 3: ✅ Complete)**
-
-**Goal:** Enable teachers to download embeddings and use the system offline on mobile devices.
-
-**Phase 1: Export API (no dependencies)** ✅
-1. [x] [SYNCAI-014] Create embeddings export endpoint - `GET /api/export/embeddings`
-2. [x] Implement JSON/Vector Bundle format for mobile consumption
-3. [x] Add compression (gzip) for bandwidth optimization
-4. [x] Version control for embedding bundles
-
-**Phase 2: Mobile Storage (depends on Phase 1)** ✅
-5. [x] [SYNCAI-015] Define local storage schema (WatermelonDB or SQLite)
-6. [x] Implement download manager service
-7. [x] Create cache invalidation logic
-8. [x] Add storage quota management
-
-**Phase 3: Sync Mechanism (depends on Phase 2)** ✅
-9. [x] [SYNCAI-016] Implement connectivity detection service
-10. [x] Create background sync scheduler
-11. [x] Add delta sync (only download changed embeddings)
-12. [x] Implement conflict resolution strategy
-
-**Phase 4: Offline RAG (depends on Phase 3)**
-13. [ ] Port vector search to run locally on device
-14. [ ] Implement local embedding generation (optional)
-15. [ ] Add offline queue for queries made without connection
-
-**Phase 5: Schema Documentation (independent)**
-16. [ ] [SYNCAI-021] Create database/schema.sql with Supabase table definitions
-17. [ ] Document vector extension configuration (pgvector)
-18. [ ] Add table indexes and performance optimizations
-19. [ ] Create schema migration guide for future updates
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/export/embeddings` | GET | Download embeddings bundle (supports pagination, gzip) |
+| `/api/sync/version` | GET | Get current embedding version |
+| `/api/sync/check-eligibility` | POST | Validate if client should sync |
+| `/api/sync/queries` | POST | Sync offline queries (analytics) |
+| `/api/sync/queries/stats` | GET | Get query statistics |
 
 ---
 
-### 🎤 Milestone 4: Interface de Voz (Mobile STT)
+### 📋 Required Frontend Services
+
+#### 1. Download Manager Service
+**Interface:** `IDownloadManager` | **Priority:** High | **Complexity:** Medium
+
+Manages background download of embeddings from backend to mobile device.
+
+**Implementation Requirements:**
+```
+📁 src/services/DownloadManager.ts
+├── startDownload(version?: string): Promise<void>
+├── pauseDownload(): Promise<void>
+├── resumeDownload(): Promise<void>
+├── cancelDownload(): Promise<void>
+├── getProgress(): DownloadProgress | null
+├── onProgress(callback): () => void
+├── isDownloading(): boolean
+├── getPendingTasks(): Promise<DownloadTask[]>
+└── retryFailed(): Promise<void>
+```
+
+**Key Features:**
+- [ ] Batch download with configurable size (default: 500 embeddings)
+- [ ] Resume interrupted downloads
+- [ ] Progress tracking with speed/ETA estimation
+- [ ] Retry logic with exponential backoff (max 3 retries)
+- [ ] Background download support (React Native Background Fetch)
+
+**Dependencies:** Connectivity Service, Storage Quota Manager
+
+---
+
+#### 2. Connectivity Service
+**Interface:** `IConnectivityService` | **Priority:** High | **Complexity:** Low
+
+Detects network connectivity changes and determines sync eligibility.
+
+**Implementation Requirements:**
+```
+📁 src/services/ConnectivityService.ts
+├── getStatus(): Promise<ConnectivityStatus>
+├── checkSyncEligibility(rules): Promise<SyncEligibility>
+├── onConnectivityChange(callback): () => void
+├── estimateDownloadTime(bytes): Promise<number>
+└── testConnectionQuality(apiBaseUrl): Promise<ConnectionQuality>
+```
+
+**Key Features:**
+- [ ] Use `@react-native-community/netinfo` for connectivity detection
+- [ ] Battery level check via `react-native-device-info`
+- [ ] WiFi vs Cellular distinction
+- [ ] Connection quality estimation (ping-based)
+- [ ] Sync rules validation (WiFi only, min battery, etc.)
+
+**React Native Libraries:**
+- `@react-native-community/netinfo`
+- `react-native-device-info`
+
+---
+
+#### 3. Storage Quota Manager
+**Interface:** `IStorageQuotaManager` | **Priority:** High | **Complexity:** Medium
+
+Manages local storage quotas and implements cleanup strategies.
+
+**Implementation Requirements:**
+```
+📁 src/services/StorageQuotaManager.ts
+├── getUsage(): Promise<StorageUsage>
+├── isQuotaExceeded(): Promise<boolean>
+├── hasSufficientStorage(requiredBytes): Promise<boolean>
+├── monitorUsage(): Promise<void>
+├── cleanup(strategy): Promise<CleanupResult>
+├── setQuotaLimit(bytes): Promise<void>
+└── getQuotaLimit(): Promise<number>
+```
+
+**Key Features:**
+- [ ] Default quota: 100MB (configurable)
+- [ ] Cleanup strategies: LRU, oldest_first, low_usage
+- [ ] Automatic cleanup when quota exceeded
+- [ ] Storage usage monitoring
+- [ ] Warning thresholds (80%, 90%, 100%)
+
+**Storage Estimation:**
+- 384-dim embedding ≈ 1.5KB per document
+- 10,000 documents ≈ 15MB
+- Recommended: 50,000 documents max (75MB)
+
+---
+
+#### 4. Local Vector Search Service
+**Interface:** `ILocalVectorSearch` | **Priority:** Critical | **Complexity:** High
+
+Performs vector similarity search on device using local embeddings.
+
+**Implementation Requirements:**
+```
+📁 src/services/LocalVectorSearch.ts
+├── search(queryEmbedding, options): Promise<LocalSearchResult[]>
+├── preloadEmbeddings(): Promise<void>
+├── getEmbeddingCount(): Promise<number>
+└── validateDimensions(embedding): boolean
+```
+
+**Key Features:**
+- [ ] Cosine similarity calculation (provided in interface)
+- [ ] Top-K results with min score threshold
+- [ ] Optional embedding preload for faster search
+- [ ] Source/chapter filtering
+- [ ] Expected dimensions: 384 (all-MiniLM-L6-v2)
+
+**Algorithm (Cosine Similarity):**
+```typescript
+similarity = dotProduct(A, B) / (magnitude(A) * magnitude(B))
+```
+
+**Performance Target:** <100ms for 10,000 embeddings on mid-range device
+
+---
+
+#### 5. Local Embedding Service (Optional)
+**Interface:** `ILocalEmbeddingService` | **Priority:** Low | **Complexity:** High
+
+Generates embeddings locally for user queries (fully offline RAG).
+
+**Implementation Requirements:**
+```
+📁 src/services/LocalEmbeddingService.ts
+├── generateEmbedding(text): Promise<EmbeddingGenerationResult>
+├── isModelReady(): Promise<boolean>
+├── downloadModel(onProgress): Promise<void>
+├── getModelInfo(): Promise<ModelInfo>
+└── deleteModel(): Promise<void>
+```
+
+**Recommended Model:** `Xenova/all-MiniLM-L6-v2` (quantized, ~23MB)
+
+**Trade-offs:**
+- ✅ Complete offline operation
+- ✅ Privacy (queries never leave device)
+- ❌ Requires ~23-118MB model download
+- ❌ Slower on low-end devices (~50-100ms per query)
+- ❌ Battery drain
+
+**Recommendation:** Implement as optional feature, default to pre-computed query cache
+
+---
+
+#### 6. Offline Query Queue Service
+**Interface:** `IOfflineQueryQueue` | **Priority:** Medium | **Complexity:** Medium
+
+Manages queries made while offline, syncing to backend when connected.
+
+**Implementation Requirements:**
+```
+📁 src/services/OfflineQueryQueue.ts
+├── addQuery(query, response, metadata): Promise<string>
+├── getQueue(): Promise<QueuedQuery[]>
+├── syncPendingQueries(): Promise<QuerySyncResult>
+├── clearSynced(): Promise<number>
+├── getStats(): Promise<QueueStats>
+├── retryFailed(): Promise<QuerySyncResult>
+└── setUserConsent(consent): Promise<void>
+```
+
+**Key Features:**
+- [ ] Requires explicit user consent for analytics sync
+- [ ] Device ID anonymization (SHA-256 hashing)
+- [ ] Priority queue (high/normal/low)
+- [ ] Max 3 retry attempts per query
+- [ ] Batch sync (50 queries per request)
+
+**Privacy Requirements:**
+- User must opt-in to query analytics
+- Device ID is hashed before sync
+- No PII in query metadata
+
+---
+
+#### 7. Cache Invalidation Service (Frontend)
+**Interface:** `ICacheInvalidationService` | **Priority:** High | **Complexity:** Low
+
+Manages local cache validation using backend version API.
+
+**Implementation Requirements:**
+```
+📁 src/services/CacheInvalidationService.ts
+├── checkCacheStatus(): Promise<CacheStatus>
+├── getLatestVersion(): Promise<string>
+├── isOutdated(): Promise<boolean>
+├── invalidateCache(): Promise<void>
+├── updateLocalVersion(version): Promise<void>
+└── isCacheExpired(maxAgeHours?): Promise<boolean>
+```
+
+**Key Features:**
+- [ ] Call `GET /api/sync/version` to get latest version
+- [ ] Call `POST /api/sync/check-eligibility` for full validation
+- [ ] Store local version in AsyncStorage/MMKV
+- [ ] Default cache expiration: 30 days
+- [ ] Force full sync if version difference > 2 major versions
+
+---
+
+### 📦 Local Database Schema
+
+Implement using **WatermelonDB** (recommended) or **SQLite**.
+
+**Tables Required:**
+
+| Table | Description | Schema Reference |
+|-------|-------------|------------------|
+| `embeddings` | Vector embeddings for offline search | `LocalEmbeddingSchema` |
+| `sync_metadata` | Sync state and version tracking | `SyncMetadataSchema` |
+| `download_queue` | Background download tasks | `DownloadQueueSchema` |
+| `offline_queries` | Queries made offline | `QueuedQuery` |
+
+**Schema File:** `src/modules/export/mobile-storage.schema.ts`
+
+---
+
+### 🔄 Sync Flow Diagram
+
+```
+┌─────────────┐     ┌──────────────┐     ┌─────────────┐
+│   App Start │────▶│ Check Cache  │────▶│ Cache Valid?│
+└─────────────┘     └──────────────┘     └─────────────┘
+                                                │
+                    ┌───────────────────────────┼───────────────────────────┐
+                    │ YES                       │                     NO    │
+                    ▼                           ▼                           ▼
+            ┌──────────────┐           ┌──────────────┐           ┌──────────────┐
+            │ Use Local DB │           │ Check Eligib │           │ Full Download│
+            └──────────────┘           └──────────────┘           └──────────────┘
+                                              │
+                              ┌───────────────┼───────────────┐
+                              │ Eligible      │          Not  │
+                              ▼               ▼               ▼
+                      ┌──────────────┐  ┌──────────────┐  ┌──────────────┐
+                      │ Delta Sync   │  │ Wait for     │  │ Use Stale    │
+                      │ (changed)    │  │ WiFi/Battery │  │ Cache        │
+                      └──────────────┘  └──────────────┘  └──────────────┘
+```
+
+---
+
+### 📊 Implementation Priority Matrix
+
+| Service | Priority | Effort | Dependencies |
+|---------|----------|--------|--------------|
+| Connectivity Service | 🔴 High | Low | None |
+| Storage Quota Manager | 🔴 High | Medium | None |
+| Download Manager | 🔴 High | Medium | Connectivity, Storage |
+| Cache Invalidation | 🔴 High | Low | None |
+| Local Vector Search | 🔴 Critical | High | Storage |
+| Offline Query Queue | 🟡 Medium | Medium | Connectivity |
+| Local Embedding (Opt) | 🟢 Low | High | Vector Search |
+
+**Recommended Implementation Order:**
+1. Connectivity Service (foundation)
+2. Cache Invalidation Service (version checking)
+3. Storage Quota Manager (storage safety)
+4. Download Manager (get embeddings)
+5. Local Vector Search (offline RAG)
+6. Offline Query Queue (analytics)
+7. Local Embedding Service (optional enhancement)
+
+---
+
+<a id="complete-roadmap"></a>
+## 📋 Complete Roadmap - All Milestones
+
+<a id="milestone-1"></a>
+### ✅ Milestone 1: Manual Ingestion
+<a id="milestone-2"></a>
+### ✅ Milestone 2: RAG Response Engine
+
+<a id="milestone-3"></a>
+### 🔄 Milestone 3: Synchronization & Offline-First
+
+**Current Status: Backend 100% Complete | Frontend 0% Complete**
+
+**Goal:** Enable teachers to download embeddings and use the system offline on mobile devices.
+
+**Phase 1: Export API (Backend)** ✅
+**Phase 2: Mobile Storage (Backend Interfaces)** ✅
+**Phase 3: Sync Mechanism (Backend)** ✅
+**Phase 4: Offline Analytics (Backend)** ✅
+
+**Phase 5: Frontend Implementation** ⏳
+16. [ ] Implement ConnectivityService (React Native)
+17. [ ] Implement StorageQuotaManager (React Native)
+18. [ ] Implement DownloadManager (React Native)
+19. [ ] Implement LocalVectorSearch (React Native)
+20. [ ] Implement OfflineQueryQueue (React Native)
+21. [ ] Implement CacheInvalidationService (React Native)
+22. [ ] (Optional) Implement LocalEmbeddingService (React Native)
+
+**Phase 6: Schema Documentation (independent)** ✅
+
+---
+
+<a id="milestone-4"></a>
+### 🎤 Milestone 4: Voice Interface (Mobile STT)
 
 **Current Status: 0% Complete**
 
@@ -82,7 +378,8 @@
 
 ---
 
-### ✅ Milestone 5: Validação e Pitch
+<a id="milestone-5"></a>
+### ✅ Milestone 5: Validation and Pitch
 
 **Current Status: 0% Complete**
 
@@ -117,15 +414,15 @@
 ### 📊 Milestone Dependencies Graph
 
 ```
-Milestone 1 (Ingestão) ✅
+Milestone 1 (Ingestion) ✅
     │
     ▼
-Milestone 2 (Motor de Resposta) ◐ ─────────────────┐
+Milestone 2 (RAG Response Engine) ◐ ─────────────────┐
     │                                               │
     ├──────────────────────┐                        │
     ▼                      ▼                        ▼
 Milestone 3            Milestone 4            Milestone 5
-(Offline-First)        (Interface Voz)        (Validação)
+(Offline-First)        (Voice Interface)        (Validation)
     │                      │                        ▲
     │                      │                        │
     └──────────────────────┴────────────────────────┘
@@ -137,6 +434,7 @@ Milestone 3            Milestone 4            Milestone 5
 
 ---
 
+<a id="key-personas"></a>
 ## 👥 Key Personas
 
 ### Sunita (Primary User)
@@ -146,7 +444,7 @@ Milestone 3            Milestone 4            Milestone 5
 - Teaches mixed-age classes (4th-6th grade) with diverse learning needs
 - **Core Need:** Immediate pedagogical strategies in real-time classroom situations
 
-### CRP (Coordinador de Recursos Pedagógicos)
+### CRP (Coordinator of Pedagogical Resources)
 
 - Mentor providing professional development support
 - Appears rarely with generic advice
@@ -154,6 +452,7 @@ Milestone 3            Milestone 4            Milestone 5
 
 ---
 
+<a id="problem-solution"></a>
 ## 🔴 The Problem
 
 | Issue                               | Impact                                                                                   |
@@ -175,6 +474,7 @@ Milestone 3            Milestone 4            Milestone 5
 
 ---
 
+<a id="user-experience-flow"></a>
 ## 🔄 User Experience Flow
 
 1. **Voice Input:** Teacher presses button/voice command describing classroom problem
@@ -200,6 +500,7 @@ Milestone 3            Milestone 4            Milestone 5
 
 ---
 
+<a id="technology-stack"></a>
 ## 🛠️ Technology Stack
 
 ### Frontend
@@ -293,10 +594,36 @@ src/
 
 This repository handles the backend and infrastructure. The frontend (React Native) is maintained separately in the [EduSync-AI](https://github.com/Sofia-gith/Edusync-AI) repository.
 
+---
+
+<a id="database-schema"></a>
+## 🗄️ Database Schema Documentation
+
+All database documentation and DDL (Supabase) and local storage (WatermelonDB / SQLite) is consolidated in:
+
+- Backend (Supabase): `database/schema.sql` (file with DDL, functions and migration notes)
+- Mobile (WatermelonDB schema): `src/modules/export/mobile-storage.schema.ts`
+
+> Note: keeping documentation centralized in these files avoids divergence between documentation and implementation.
+
+Quick reference:
+- `database/schema.sql` → tables: `pedagogical_knowledge_v384`, `offline_queries`, `embedding_versions` + function `match_documents_v384`
+- `src/modules/export/mobile-storage.schema.ts` → local tables: `embeddings`, `sync_metadata`, `download_queue`
+
+---
+
+<a id="future-enhancements"></a>
+## Future Enhancements
+
+Full list and backlog is tracked in [`FUTURE_ENHANCEMENTS.md`](../FUTURE_ENHANCEMENTS.md).
+
+---
+
 ## 🛡️ Ethical AI & Data Privacy
 
 Privacy First: All voice processing is done locally to ensure teacher and student privacy. Data synced to the cloud is anonymized and used only for improving pedagogical retrieval.
 
+<a id="related-links"></a>
 ## 🔗 Related Links
 
 - **Frontend Repository:** https://github.com/Sofia-gith/Edusync-AI

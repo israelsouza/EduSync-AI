@@ -57,6 +57,28 @@ export interface DownloadQueueSchema {
 }
 
 /**
+ * TABLE: offline_queries
+ *
+ * Stores queries made while offline for later sync to backend (analytics)
+ * REQUIRES EXPLICIT USER CONSENT
+ */
+export interface OfflineQuerySchema {
+  id: string; // Primary Key - UUID generated on device
+  query: string; // Teacher's query text
+  response: string; // Response provided (offline or cached)
+  timestamp: number; // Unix timestamp in milliseconds when query was made
+  status: "pending" | "syncing" | "synced" | "failed"; // Sync status
+  priority: "low" | "normal" | "high"; // Priority for sync
+  retry_count: number; // Number of sync attempts
+  error_message: string | null; // Last error message (if failed)
+  metadata: string; // JSON stringified metadata object
+  device_id_hash: string; // Anonymized device ID (SHA-256 hash)
+  app_version: string; // App version
+  created_at: string; // ISO timestamp
+  synced_at: string | null; // ISO timestamp when synced
+}
+
+/**
  * WatermelonDB Schema Definition (React Native)
  *
  * This would be implemented in the frontend repository as:
@@ -99,6 +121,23 @@ export const watermelonDBSchema = {
         { name: "created_at", type: "number" },
         { name: "completed_at", type: "number", isOptional: true },
         { name: "error_message", type: "string", isOptional: true },
+      ],
+    },
+    {
+      name: "offline_queries",
+      columns: [
+        { name: "query", type: "string" },
+        { name: "response", type: "string" },
+        { name: "timestamp", type: "number" },
+        { name: "status", type: "string", isIndexed: true },
+        { name: "priority", type: "string" },
+        { name: "retry_count", type: "number" },
+        { name: "error_message", type: "string", isOptional: true },
+        { name: "metadata", type: "string" }, // JSON stringified
+        { name: "device_id_hash", type: "string", isIndexed: true },
+        { name: "app_version", type: "string" },
+        { name: "created_at", type: "number" },
+        { name: "synced_at", type: "number", isOptional: true },
       ],
     },
   ],

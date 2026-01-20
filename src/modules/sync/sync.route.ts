@@ -1,5 +1,13 @@
 import { Router } from "express";
-import { getSyncRulesController, connectionTestController, deltaSyncController, compareVersionsController } from "./sync.controller.js";
+import {
+  getSyncRulesController,
+  connectionTestController,
+  deltaSyncController,
+  compareVersionsController,
+  getVersionController,
+  checkEligibilityController,
+} from "./sync.controller.js";
+import { syncOfflineQueriesController, getQueryStatsController } from "./offline-queue.controller.js";
 
 const router = Router();
 
@@ -18,6 +26,13 @@ router.get("/rules", getSyncRulesController);
 router.get("/ping", connectionTestController);
 
 /**
+ * GET /api/sync/version
+ *
+ * Get current embedding version and history
+ */
+router.get("/version", getVersionController);
+
+/**
  * POST /api/sync/delta
  *
  * Get delta changes since local version
@@ -32,5 +47,28 @@ router.post("/delta", deltaSyncController);
  * Query: ?localVersion=2026.01.18.100000
  */
 router.get("/compare", compareVersionsController);
+
+/**
+ * POST /api/sync/check-eligibility
+ *
+ * Validate if device is eligible to sync based on rules
+ * Body: { localVersion, connectionType, batteryLevel, isCharging, freeStorageBytes }
+ */
+router.post("/check-eligibility", checkEligibilityController);
+
+/**
+ * POST /api/sync/queries
+ *
+ * Sync offline queries for analytics (requires consent)
+ * Body: { queries: OfflineQueryPayload[], consentGiven: boolean }
+ */
+router.post("/queries", syncOfflineQueriesController);
+
+/**
+ * GET /api/sync/queries/stats
+ *
+ * Get aggregated query statistics for analytics dashboard
+ */
+router.get("/queries/stats", getQueryStatsController);
 
 export default router;
