@@ -99,9 +99,9 @@ export const env = {
    * Determines which Text-to-Speech service to use.
    * Options:
    * - "google": Uses Google Cloud Text-to-Speech API. Requires GOOGLE_API_KEY.
+   * - "piper": Local TTS using tts-pipelines + ONNX Runtime. Fully offline.
    *
-   * Future options may include:
-   * - "piper": Local TTS using Piper for offline capability
+   * Use "google" for best quality, "piper" for offline capability.
    */
   get ttsProvider(): string {
     return getOptionalEnvVar("TTS_PROVIDER", "google").toLowerCase();

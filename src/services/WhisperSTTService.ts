@@ -156,10 +156,10 @@ export class WhisperSTTService implements ISTTService {
 
       console.log(`[WhisperSTT] Loading model from: ${modelPath}`);
 
-      this.whisperContext = await initWhisper({
+      this.whisperContext = (await initWhisper({
         filePath: modelPath,
         useGpu: false, // Default to CPU for compatibility
-      }) as WhisperContext;
+      })) as WhisperContext;
 
       this.isInitialized = true;
       console.log(`[WhisperSTT] Initialized with model: ${this.currentModelId}`);
@@ -355,10 +355,7 @@ export class WhisperSTTService implements ISTTService {
     return this.isInitialized && this.whisperContext !== null;
   }
 
-  async downloadModel(
-    modelId?: string,
-    onProgress?: (progress: ModelDownloadProgress) => void
-  ): Promise<void> {
+  async downloadModel(modelId?: string, onProgress?: (progress: ModelDownloadProgress) => void): Promise<void> {
     const targetModelId = modelId || this.currentModelId;
     const model = WHISPER_MODELS.find((m) => m.id === targetModelId);
     if (!model) {
@@ -494,14 +491,20 @@ export class WhisperSTTService implements ISTTService {
       }
 
       if (Array.isArray(result)) {
-        return result.map((segment: WhisperSegment | string) => {
-          if (typeof segment === "string") return segment;
-          return segment.text || "";
-        }).join(" ").trim();
+        return result
+          .map((segment: WhisperSegment | string) => {
+            if (typeof segment === "string") return segment;
+            return segment.text || "";
+          })
+          .join(" ")
+          .trim();
       }
 
       if (Array.isArray(obj["segments"])) {
-        return (obj["segments"] as WhisperSegment[]).map((segment) => segment.text).join(" ").trim();
+        return (obj["segments"] as WhisperSegment[])
+          .map((segment) => segment.text)
+          .join(" ")
+          .trim();
       }
     }
 
