@@ -1,0 +1,261 @@
+### ========================================
+### Voice Pipeline API Tests
+### ========================================
+### 
+### This file tests the VoicePipelineService-based endpoints
+### providing complete voice interaction orchestration.
+###
+### Base URL: http://localhost:3000
+
+@baseUrl = http://localhost:3000
+@sessionId = pipeline_1737488400000_abc123def
+
+### ========================================
+### 1. Health Check
+### ========================================
+
+### Check pipeline service health
+GET {{baseUrl}}/api/voice/pipeline/health
+Content-Type: application/json
+
+### ========================================
+### 2. Session Management
+### ========================================
+
+### Start a new pipeline session (Portuguese)
+# @name startSession
+POST {{baseUrl}}/api/voice/pipeline/sessions
+Content-Type: application/json
+
+{
+  "language": "pt-BR",
+  "isOffline": false,
+  "deviceInfo": {
+    "platform": "android",
+    "version": "11",
+    "model": "Samsung Galaxy A52"
+  },
+  "config": {
+    "stt": {
+      "enablePunctuation": true,
+      "profanityFilter": false
+    },
+    "tts": {
+      "rate": 1.0,
+      "cacheEnabled": true
+    },
+    "pipeline": {
+      "enableInterruption": true,
+      "maxTurnsInContext": 3
+    }
+  }
+}
+
+### Get pipeline status
+GET {{baseUrl}}/api/voice/pipeline/sessions/{{sessionId}}/status
+Content-Type: application/json
+
+### Get pipeline configuration
+GET {{baseUrl}}/api/voice/pipeline/sessions/{{sessionId}}/config
+Content-Type: application/json
+
+### End pipeline session
+DELETE {{baseUrl}}/api/voice/pipeline/sessions/{{sessionId}}
+Content-Type: application/json
+
+### ========================================
+### 3. Text Input (Bypass STT)
+### ========================================
+
+### Process text input without audio
+POST {{baseUrl}}/api/voice/pipeline/sessions/{{sessionId}}/text
+Content-Type: application/json
+
+{
+  "text": "Como posso ensinar subtração com reagrupamento para turma mista de 4° e 5° ano?",
+  "includeAudio": true
+}
+
+### Process text input - Simple query
+POST {{baseUrl}}/api/voice/pipeline/sessions/{{sessionId}}/text
+Content-Type: application/json
+
+{
+  "text": "Quais estratégias para gerenciar comportamento em sala multisseriada?",
+  "includeAudio": false
+}
+
+### ========================================
+### 4. Audio Input (Full Pipeline: STT → RAG → TTS)
+### ========================================
+
+### Process audio input (base64 encoded)
+POST {{baseUrl}}/api/voice/pipeline/sessions/{{sessionId}}/audio
+Content-Type: application/json
+
+{
+  "audioData": "UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=",
+  "format": "wav",
+  "includeAudio": true
+}
+
+### ========================================
+### 5. Pipeline Control
+### ========================================
+
+### Interrupt current operation (e.g., TTS playback)
+POST {{baseUrl}}/api/voice/pipeline/sessions/{{sessionId}}/interrupt
+Content-Type: application/json
+
+### Cancel current operation
+POST {{baseUrl}}/api/voice/pipeline/sessions/{{sessionId}}/cancel
+Content-Type: application/json
+
+### ========================================
+### 6. Real-Time Events (SSE)
+### ========================================
+
+### Subscribe to pipeline events (Server-Sent Events)
+### Note: This is a streaming endpoint, won't complete until connection closes
+GET {{baseUrl}}/api/voice/pipeline/sessions/{{sessionId}}/events
+Accept: text/event-stream
+
+### ========================================
+### 7. Complete Flow Example
+### ========================================
+
+### Step 1: Start session
+# @name flowSession
+POST {{baseUrl}}/api/voice/pipeline/sessions
+Content-Type: application/json
+
+{
+  "language": "pt-BR",
+  "isOffline": false,
+  "deviceInfo": {
+    "platform": "web",
+    "browser": "Chrome"
+  }
+}
+
+###
+
+@flowSessionId = {{flowSession.response.body.data.session.id}}
+
+### Step 2: Send first text query
+POST {{baseUrl}}/api/voice/pipeline/sessions/{{flowSessionId}}/text
+Content-Type: application/json
+
+{
+  "text": "Oi Sunita, preciso de ajuda com gestão de sala de aula.",
+  "includeAudio": true
+}
+
+### Step 3: Send follow-up query (uses context from previous turn)
+POST {{baseUrl}}/api/voice/pipeline/sessions/{{flowSessionId}}/text
+Content-Type: application/json
+
+{
+  "text": "Quais estratégias específicas você recomenda?",
+  "includeAudio": true
+}
+
+### Step 4: Check status
+GET {{baseUrl}}/api/voice/pipeline/sessions/{{flowSessionId}}/status
+Content-Type: application/json
+
+### Step 5: End session
+DELETE {{baseUrl}}/api/voice/pipeline/sessions/{{flowSessionId}}
+Content-Type: application/json
+
+### ========================================
+### 8. Multi-Turn Conversation Example
+### ========================================
+
+### Turn 1: Initial question
+POST {{baseUrl}}/api/voice/pipeline/sessions/{{sessionId}}/text
+Content-Type: application/json
+
+{
+  "text": "Como posso motivar alunos que estão atrasados no conteúdo?",
+  "includeAudio": false
+}
+
+### Turn 2: Clarification (uses context)
+POST {{baseUrl}}/api/voice/pipeline/sessions/{{sessionId}}/text
+Content-Type: application/json
+
+{
+  "text": "E se eles têm dificuldade com leitura básica?",
+  "includeAudio": false
+}
+
+### Turn 3: Specific scenario (uses context from both previous turns)
+POST {{baseUrl}}/api/voice/pipeline/sessions/{{sessionId}}/text
+Content-Type: application/json
+
+{
+  "text": "Isso funcionaria com alunos do 3° ano?",
+  "includeAudio": false
+}
+
+### ========================================
+### 9. Error Scenarios
+### ========================================
+
+### Invalid session ID
+GET {{baseUrl}}/api/voice/pipeline/sessions/invalid_session_id/status
+Content-Type: application/json
+
+### Empty text input
+POST {{baseUrl}}/api/voice/pipeline/sessions/{{sessionId}}/text
+Content-Type: application/json
+
+{
+  "text": "",
+  "includeAudio": false
+}
+
+### Missing audio data
+POST {{baseUrl}}/api/voice/pipeline/sessions/{{sessionId}}/audio
+Content-Type: application/json
+
+{
+  "format": "wav",
+  "includeAudio": true
+}
+
+### ========================================
+### 10. Spanish Session Example
+### ========================================
+
+### Start Spanish session
+# @name spanishSession
+POST {{baseUrl}}/api/voice/pipeline/sessions
+Content-Type: application/json
+
+{
+  "language": "es-419",
+  "isOffline": false,
+  "deviceInfo": {
+    "platform": "ios",
+    "version": "15"
+  }
+}
+
+###
+
+@spanishSessionId = {{spanishSession.response.body.data.session.id}}
+
+### Spanish query
+POST {{baseUrl}}/api/voice/pipeline/sessions/{{spanishSessionId}}/text
+Content-Type: application/json
+
+{
+  "text": "¿Cómo puedo enseñar fracciones a estudiantes de diferentes niveles?",
+  "includeAudio": true
+}
+
+### End Spanish session
+DELETE {{baseUrl}}/api/voice/pipeline/sessions/{{spanishSessionId}}
+Content-Type: application/json

@@ -64,9 +64,56 @@ export const env = {
     return SUPPORTED_LLM_PROVIDERS.includes(this.llmProvider as LLMProvider);
   },
 
+  /**
+   * Google Model Configuration
+   */
+  get googleModel(): string {
+    return getOptionalEnvVar("GOOGLE_MODEL", "gemini-2.5-flash");
+  },
+
+  /**
+   * Google STT Model Configuration
+   *
+   * Model used specifically for Speech-to-Text (audio transcription).
+   * Must be a model that supports audio input (multimodal).
+   * Default: gemini-2.5-flash (supports audio)
+   */
+  get googleSTTModel(): string {
+    return getOptionalEnvVar("GOOGLE_STT_MODEL", "gemini-2.5-flash");
+  },
+
+  /**
+   * STT Provider Configuration
+   *
+   * Determines which Speech-to-Text service to use.
+   * Options:
+   * - "google": Uses Google's Gemini for multimodal transcription. Requires GOOGLE_API_KEY.
+   */
+  get sttProvider(): string {
+    return getOptionalEnvVar("STT_PROVIDER", "google").toLowerCase();
+  },
+
+  /**
+   * TTS Provider Configuration
+   *
+   * Determines which Text-to-Speech service to use.
+   * Options:
+   * - "google": Uses Google Cloud Text-to-Speech API. Requires GOOGLE_API_KEY.
+   * - "piper": Local TTS using tts-pipelines + ONNX Runtime. Fully offline.
+   *
+   * Use "google" for best quality, "piper" for offline capability.
+   */
+  get ttsProvider(): string {
+    return getOptionalEnvVar("TTS_PROVIDER", "google").toLowerCase();
+  },
+
   // active dependent on provider
   get googleApiKey(): string {
     return getEnvVar("GOOGLE_API_KEY");
+  },
+
+  get openaiApiKey(): string {
+    return getOptionalEnvVar("OPENAI_API_KEY");
   },
 
   get supabaseUrl(): string {
@@ -95,6 +142,14 @@ export const env = {
       throw new Error(`Invalid LLM_PROVIDER "${this.llmProvider}". Supported providers: ${SUPPORTED_LLM_PROVIDERS.join(", ")}`);
     }
     if (this.llmProvider === "google") void this.googleApiKey;
+
+    // Validate STT
+    console.log(`🎙️ STT Provider: ${this.sttProvider}`);
+
+    // Validate TTS
+    console.log(`🔊 TTS Provider: ${this.ttsProvider}`);
+
+    console.log(`🎯 Google Model: ${this.googleModel}`);
 
     console.log("✅ Configurations validated successfully.");
   },

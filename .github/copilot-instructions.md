@@ -348,33 +348,150 @@ Implement using **WatermelonDB** (recommended) or **SQLite**.
 <a id="milestone-4"></a>
 ### 🎤 Milestone 4: Voice Interface (Mobile STT)
 
-**Current Status: 0% Complete**
+**Current Status: Backend ~80% Complete | Mobile 0% Complete**
 
 **Goal:** Enable teachers to interact with Sunita using voice input and receive audio responses.
 
-**Phase 1: Audio Capture (no dependencies)**
+**Backend Implementation Status:**
+
+| Component | Status | File |
+|-----------|--------|------|
+| IAudioStreamHandler (interface) | ✅ | `src/interface/IAudioStreamHandler.ts` |
+| ISTTService (interface) | ✅ | `src/interface/ISTTService.ts` |
+| ITTSService (interface) | ✅ | `src/interface/ITTSService.ts` |
+| IVoicePipeline (interface) | ✅ | `src/interface/IVoicePipeline.ts` |
+| GoogleSTTService | ✅ | `src/services/GoogleSTTService.ts` |
+| GoogleTTSService | ✅ | `src/services/GoogleTTSService.ts` |
+| sttFactory | ✅ | `src/lib/sttFactory.ts` |
+| ttsFactory | ✅ | `src/lib/ttsFactory.ts` |
+| voice.controller | ✅ | `src/modules/voice/voice.controller.ts` |
+| voice.route | ✅ | `src/modules/voice/voice.route.ts` |
+| voice.types | ✅ | `src/modules/voice/voice.types.ts` |
+| TTS Integration (voice.controller) | ✅ | Text and Audio endpoints with TTS |
+| WhisperSTTService (local/offline) | ✅ | `src/services/WhisperSTTService.ts` |
+| PiperTTSService (local/offline) | ✅ | `src/services/PiperTTSService.ts` |
+| VoicePipelineService | ✅ | `src/services/VoicePipelineService.ts` |
+| AudioStreamHandler | ❌ | Pending |
+
+**Recent Progress (Jan 21, 2026):**
+- ✅ Implemented VoicePipelineService with complete voice orchestration
+- ✅ Session and turn management with state machine
+- ✅ Event system for real-time UI updates
+- ✅ Statistics tracking (avg times, error rates)
+- ✅ Interruption handling and error recovery
+- ✅ Fixed all lint errors (turnId optional, transcription structure, non-null assertions)
+- ✅ Integrated STT→RAG→TTS pipeline
+- ✅ Conversation context building from previous turns
+
+**Previous Progress (Jan 20, 2026):**
+- ✅ Implemented GoogleTTSService with voice caching and preprocessing
+- ✅ Created ttsFactory for TTS service instantiation
+- ✅ Added TTS_PROVIDER configuration to env.ts
+- ✅ Integrated TTS into voice.controller endpoints (/text and /audio)
+- ✅ Fixed Gemini model version (using gemini-2.5-flash for STT)
+- ✅ Tested TTS synthesis with Portuguese voice (sunita-pt-br)
+- ✅ Implemented WhisperSTTService for offline STT (whisper.cpp binding)
+- ✅ Updated sttFactory to support "whisper" provider
+- ✅ Created models/whisper directory for model storage
+- ✅ Added model download functionality with progress tracking
+
+**Phase 1: Audio Capture (no dependencies)** - 0/4 complete
 1. [ ] [SYNCAI-017] Create audio stream handler service
 2. [ ] Implement microphone permission management
 3. [ ] Add audio buffer management
 4. [ ] Create voice activity detection (VAD)
 
-**Phase 2: Speech-to-Text (depends on Phase 1)**
-5. [ ] [SYNCAI-018] Integrate local STT model (Whisper.cpp or similar)
-6. [ ] Create STT pipeline interface - `src/interface/ISTTService.ts`
-7. [ ] Implement streaming transcription
-8. [ ] Add language detection (Portuguese/Spanish/English)
+**Phase 2: Speech-to-Text (depends on Phase 1)** - 3/5 complete
+5. [x] Create STT pipeline interface - `src/interface/ISTTService.ts` ✅
+6. [x] Implement GoogleSTTService (cloud-based) ✅
+7. [x] Integrate local STT model (Whisper.cpp) for offline - `src/services/WhisperSTTService.ts` ✅
+8. [ ] Implement streaming transcription
+9. [ ] Add language detection (Portuguese/Spanish/English)
 
-**Phase 3: Text-to-Speech (depends on Milestone 2)**
-9. [ ] Create TTS service interface - `src/interface/ITTSService.ts`
-10. [ ] Integrate local TTS model (Piper or similar)
-11. [ ] Implement audio output management
-12. [ ] Add voice customization (speed, pitch)
+**Phase 3: Text-to-Speech (depends on Milestone 2)** - 3/5 complete
+10. [x] Create TTS service interface - `src/interface/ITTSService.ts` ✅
+11. [x] Implement GoogleTTSService (cloud-based) ✅
+12. [ ] Integrate local TTS model (Piper) for offline
+13. [x] Implement audio output management - ✅ Via controller endpoints
+14. [x] Add voice customization (speed, pitch) - ✅ Available in GoogleTTSService
 
-**Phase 4: Voice Pipeline Integration (depends on Phase 2, 3)**
-13. [ ] Create end-to-end voice pipeline
-14. [ ] Implement interruption handling
-15. [ ] Add audio feedback (processing sounds)
-16. [ ] Optimize latency for real-time interaction
+**Phase 4: Voice Pipeline Integration (depends on Phase 2, 3)** - 1/5 complete
+15. [x] Integrate TTS with voice.controller ✅
+16. [ ] Create end-to-end VoicePipelineService
+17. [ ] Implement interruption handling
+18. [ ] Add audio feedback (processing sounds)
+19. [ ] Optimize latency for real-time interaction
+
+🎯 Próximos Passos Recomendados (Ordem de Prioridade):
+
+**✅ Sprint 1 Completo: TTS Cloud Service**
+- ✅ GoogleTTSService implementado e funcional
+- ✅ Integração com voice.controller em /text e /audio
+- ✅ Cache de síntese para melhorar performance
+- ✅ Suporte a múltiplas vozes (PT-BR, ES, EN)
+
+**✅ Sprint 2 Completo: Modelo Local STT**
+- ✅ WhisperSTTService implementado com @fugood/whisper.node
+- ✅ Suporte a português brasileiro (e outros idiomas)
+- ✅ Download automático de modelos com progresso
+- ✅ sttFactory atualizado para suportar provider "whisper"
+- ✅ Diretório models/whisper configurado
+
+**✅ Sprint 3 Completo: Modelo Local TTS (Piper)**
+- ✅ PiperTTSService implementado usando `tts-pipelines` + `onnxruntime-node`
+- ✅ ttsFactory atualizado para suportar provider "piper"
+- ✅ Suporte a vozes em PT-BR, ES, EN (offline)
+- ✅ Cache de áudio com estratégia LRU
+- ✅ Pré-processamento de texto para termos educacionais
+- ✅ Configuração: `TTS_PROVIDER=piper` no .env
+
+**✅ Sprint 4 Completo: Voice Pipeline Service**
+- ✅ VoicePipelineService implementado com orquestração completa
+- ✅ Gerenciamento de sessões e turns com IDs únicos
+- ✅ Máquina de estados (idle→listening→processing→speaking→interrupted→error)
+- ✅ Sistema de eventos para updates em tempo real (VoicePipelineEvent)
+- ✅ Orquestração STT→RAG→TTS completa
+- ✅ Tracking de estatísticas (tempos médios, taxas de erro, interrupções)
+- ✅ Suporte a interrupção durante playback de TTS
+- ✅ Construção de contexto conversacional das turns anteriores
+- ✅ Tratamento de erros com recuperação automática
+- ✅ Todos os erros de lint corrigidos (sem any, sem non-null assertions)
+
+**✅ Sprint 5 Completo: Pipeline API Integration**
+- ✅ pipeline.controller.ts implementado com 12 endpoints REST
+- ✅ pipeline.route.ts com rotas organizadas por funcionalidade
+- ✅ Integração completa com VoicePipelineService
+- ✅ Suporte a Server-Sent Events (SSE) para eventos em tempo real
+- ✅ Gerenciamento de pipeline instances em memória com cleanup automático
+- ✅ Endpoints: /sessions, /text, /audio, /interrupt, /cancel, /status, /events
+- ✅ Arquivo de testes HTTP (tests/api/pipeline.http) com 10 cenários
+- ✅ Health check e monitoramento de pipelines ativos
+- ✅ Suporte completo a português, espanhol e inglês
+
+**Sprint 6: AudioStreamHandler (Mobile)** - PRÓXIMO
+- Implementar `AudioStreamHandler.ts` para captura de áudio
+- Adicionar VAD (Voice Activity Detection)
+- Testar captura em React Native
+- Otimizar latência
+
+**Dependências npm instaladas:**
+```json
+{
+  "@fugood/whisper.node": "^1.0.13",       // STT local (Node.js)
+  "tts-pipelines": "^0.2.8",               // TTS local (Node.js) - Piper via ONNX
+  "onnxruntime-node": "latest",            // ONNX Runtime para Node.js
+  "ffmpeg-static": "^5.3.0",               // Conversão de áudio
+  "node-wav": "^0.0.2"                     // Manipulação WAV
+}
+```
+
+**Configuração atual (.env):**
+```bash
+# Voice Services
+STT_PROVIDER=google        # google | whisper
+TTS_PROVIDER=google        # google | piper
+GOOGLE_MODEL=gemini-2.5-flash  # Modelo para STT multimodal
+```
 
 ---
 

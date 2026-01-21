@@ -1,0 +1,133 @@
+### Voice API Tests
+### Base URL: http://localhost:3000/api/voice
+
+### ============================================================================
+### Session Management
+### ============================================================================
+
+### Start a new voice session (Portuguese)
+# @name startSession
+POST http://localhost:3000/api/voice/sessions
+Content-Type: application/json
+
+{
+  "language": "pt-BR",
+  "deviceInfo": "Test Client",
+  "isOffline": false
+}
+
+### Start a new voice session (Spanish)
+POST http://localhost:3000/api/voice/sessions
+Content-Type: application/json
+
+{
+  "language": "es-419",
+  "deviceInfo": "Test Client Mobile",
+  "isOffline": true
+}
+
+### Get session history
+GET http://localhost:3000/api/voice/sessions?limit=10
+
+### Get specific session
+GET http://localhost:3000/api/voice/sessions/{{startSession.response.body.data.sessionId}}
+
+### End session
+POST http://localhost:3000/api/voice/sessions/{{startSession.response.body.data.sessionId}}/end
+
+### ============================================================================
+### Voice Interaction
+### ============================================================================
+
+### Process text input (simulating voice)
+# @name textInput
+POST http://localhost:3000/api/voice/sessions/{{startSession.response.body.data.sessionId}}/text
+Content-Type: application/json
+
+{
+  "text": "Como posso trabalhar com turmas multisérie de forma eficiente?",
+  "speakResponse": false
+}
+
+### Process text input with TTS response
+POST http://localhost:3000/api/voice/sessions/{{startSession.response.body.data.sessionId}}/text
+Content-Type: application/json
+
+{
+  "text": "Quais estratégias posso usar para alunos com dificuldade em matemática?",
+  "speakResponse": true
+}
+
+### Process audio input (not yet implemented)
+POST http://localhost:3000/api/voice/sessions/{{startSession.response.body.data.sessionId}}/audio
+Content-Type: application/json
+
+{
+  "audioBase64": "SGVsbG8gV29ybGQ=",
+  "format": "wav",
+  "sampleRate": 16000,
+  "speakResponse": true
+}
+
+### ============================================================================
+### Pipeline Status & Configuration
+### ============================================================================
+
+### Get pipeline status
+GET http://localhost:3000/api/voice/status
+
+### Get voice statistics
+GET http://localhost:3000/api/voice/stats
+
+### Get available models
+GET http://localhost:3000/api/voice/models
+
+### Get voice configuration
+GET http://localhost:3000/api/voice/config
+
+### Update voice configuration
+PATCH http://localhost:3000/api/voice/config
+Content-Type: application/json
+
+{
+  "stt": {
+    "language": "pt-BR",
+    "enablePunctuation": true
+  },
+  "tts": {
+    "rate": 1.1,
+    "pitch": 0
+  },
+  "pipeline": {
+    "enableInterruption": true,
+    "enableAudioFeedback": true
+  }
+}
+
+### ============================================================================
+### Error Cases
+### ============================================================================
+
+### Invalid session ID
+POST http://localhost:3000/api/voice/sessions/invalid-session-id/text
+Content-Type: application/json
+
+{
+  "text": "Test message"
+}
+
+### Missing text input
+POST http://localhost:3000/api/voice/sessions/{{startSession.response.body.data.sessionId}}/text
+Content-Type: application/json
+
+{
+  "speakResponse": false
+}
+
+### Invalid language
+POST http://localhost:3000/api/voice/sessions
+Content-Type: application/json
+
+{
+  "language": "invalid-lang"
+}
