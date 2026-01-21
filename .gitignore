@@ -8,3 +8,6 @@ uploads/
 # Coverage reports
 coverage/
 *.lcov
+
+# Whisper models (large binary files)
+models/whisper/*.bin
