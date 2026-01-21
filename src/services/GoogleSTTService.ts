@@ -83,12 +83,14 @@ export class GoogleSTTService implements ISTTService {
       });
 
       if (!response.ok) {
-        const errorData = (await response.json()) as any;
-        throw new Error(`Google STT Error: ${errorData.error?.message || response.statusText}`);
+        const errorData = (await response.json()) as unknown;
+        const errorMessage = (errorData as { error?: { message?: string } })?.error?.message || response.statusText;
+        throw new Error(`Google STT Error: ${errorMessage}`);
       }
 
-      const data = (await response.json()) as any;
-      const transcribedText = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "";
+      const data = (await response.json()) as unknown;
+      const candidates = (data as { candidates?: { content?: { parts?: { text?: string }[] } }[] })?.candidates;
+      const transcribedText = candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "";
       const processingTimeMs = Date.now() - startTime;
 
       return {
@@ -141,24 +143,35 @@ export class GoogleSTTService implements ISTTService {
   }
 
   // Interface stubs
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   async startStreaming(_callback: STTStreamCallback, _config?: Partial<STTConfig>): Promise<string> {
     throw new Error("Streaming not supported in Gemini STT implementation");
   }
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   async feedAudioChunk(_sessionId: string, _chunk: AudioChunk): Promise<void> {
     throw new Error("Streaming not supported");
   }
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   async endStreaming(_sessionId: string): Promise<TranscriptionResult> {
     throw new Error("Streaming not supported");
   }
-  async cancelStreaming(_sessionId: string): Promise<void> {}
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  async cancelStreaming(_sessionId: string): Promise<void> {
+    // No-op: Gemini doesn't support streaming
+  }
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   async detectLanguage(_audioData: ArrayBuffer): Promise<{ language: SupportedLanguage; confidence: number }> {
     return { language: "auto" as SupportedLanguage, confidence: 0 };
   }
   async isModelReady(): Promise<boolean> {
     return true;
   }
-  async downloadModel(): Promise<void> {}
-  async deleteModel(): Promise<void> {}
+  async downloadModel(): Promise<void> {
+    // No-op: Gemini is cloud-based
+  }
+  async deleteModel(): Promise<void> {
+    // No-op: Gemini is cloud-based
+  }
   async getAvailableModels(): Promise<STTModelInfo[]> {
     return [
       {
@@ -182,5 +195,7 @@ export class GoogleSTTService implements ISTTService {
   async updateConfig(config: Partial<STTConfig>): Promise<void> {
     this.config = { ...this.config, ...config };
   }
-  async dispose(): Promise<void> {}
+  async dispose(): Promise<void> {
+    // No resources to clean up for cloud-based service
+  }
 }

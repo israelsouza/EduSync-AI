@@ -457,8 +457,19 @@ Implement using **WatermelonDB** (recommended) or **SQLite**.
 - ✅ Tratamento de erros com recuperação automática
 - ✅ Todos os erros de lint corrigidos (sem any, sem non-null assertions)
 
-**Sprint 5: Audio Capture (Mobile)** - PRÓXIMO
-- Implementar `AudioStreamHandler.ts`
+**✅ Sprint 5 Completo: Pipeline API Integration**
+- ✅ pipeline.controller.ts implementado com 12 endpoints REST
+- ✅ pipeline.route.ts com rotas organizadas por funcionalidade
+- ✅ Integração completa com VoicePipelineService
+- ✅ Suporte a Server-Sent Events (SSE) para eventos em tempo real
+- ✅ Gerenciamento de pipeline instances em memória com cleanup automático
+- ✅ Endpoints: /sessions, /text, /audio, /interrupt, /cancel, /status, /events
+- ✅ Arquivo de testes HTTP (tests/api/pipeline.http) com 10 cenários
+- ✅ Health check e monitoramento de pipelines ativos
+- ✅ Suporte completo a português, espanhol e inglês
+
+**Sprint 6: AudioStreamHandler (Mobile)** - PRÓXIMO
+- Implementar `AudioStreamHandler.ts` para captura de áudio
 - Adicionar VAD (Voice Activity Detection)
 - Testar captura em React Native
 - Otimizar latência
